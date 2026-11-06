@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -15,7 +15,7 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 5rem;
+  scroll-padding-top: 7rem;
 }
 
 body {
@@ -56,6 +56,64 @@ textarea:focus-visible {
 
 .font-display {
   font-family: 'Playfair Display', serif;
+}
+
+.category-marquee {
+  overflow: hidden;
+}
+
+.category-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: category-marquee-scroll 26s linear infinite;
+}
+
+.category-marquee__track--static {
+  animation: none;
+}
+
+.category-marquee__group {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  gap: 1.1rem;
+  padding: 0 0.75rem;
+}
+
+.category-marquee__group[aria-hidden='true'] {
+  pointer-events: none;
+  user-select: none;
+}
+
+.category-marquee:hover .category-marquee__track,
+.category-marquee:focus-within .category-marquee__track {
+  animation-play-state: paused;
+}
+
+.category-marquee--static {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.category-marquee--static::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes category-marquee-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.category-marquee:hover .category-marquee__track,
+.category-marquee:focus-within .category-marquee__track {
+  animation-play-state: paused;
+}
+
+@keyframes category-marquee-scroll {
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

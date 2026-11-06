@@ -1,12 +1,13 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
-import { ArrowRight, Camera, ChevronLeft, ChevronRight, Gift, Heart, Menu, MessageCircleHeart, Search, ShieldCheck, ShoppingBag, Sparkles, Star, TrendingUp, X } from 'lucide-react';
+import { Camera, ChevronLeft, ChevronRight, Heart, Menu, MessageCircle, MessageCircleHeart, Search, ShoppingBag, Star, TrendingUp, X } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import BestSellersCarousel from '../components/BestSellersCarousel';
 import CartDrawer from '../components/CartDrawer';
 import CheckoutPage from './CheckoutPage';
 import Logo from '../components/Logo';
 import PersonalizeModal from '../components/PersonalizeModal';
-import ProductCard from '../components/ProductCard';
+import ProductCatalogue from '../components/ProductCatalogue';
 import QuickViewModal from '../components/QuickViewModal';
 import SearchOverlay from '../components/SearchOverlay';
 import WishlistDrawer from '../components/WishlistDrawer';
@@ -15,7 +16,6 @@ import { categoryCards, products, testimonials } from '../data/mockData';
 const navLinks = [
   { label: 'Home', href: '#home' },
   { label: 'Categories', href: '#categories' },
-  { label: 'About Us', href: '#story' },
   { label: 'Shop All', href: '#featured-products' },
   { label: 'Contact Us', href: '#contact' },
 ];
@@ -83,6 +83,12 @@ const heroCategories = [
   { value: 'Occasions', label: 'Wedding Plaques', image: '/Golden%20Happy%20Married%20Life%20Plaque.png' },
 ];
 
+const budgetRanges = [
+  { id: 'under-99', label: 'Under', amount: 99, min: 0, max: 99 },
+  { id: '100-299', label: '₹100 – ₹299', amount: null, min: 100, max: 299 },
+  { id: '300-599', label: '₹300 – ₹599', amount: null, min: 300, max: 599 },
+];
+
 const collectionProducts = heroCategories.slice(0, 4).map((category, index) => ({
   ...products[index],
   id: `collection-${index}`,
@@ -91,14 +97,7 @@ const collectionProducts = heroCategories.slice(0, 4).map((category, index) => (
   image: category.image,
 }));
 
-const customizedGiftCards = [
-  { id: 'photo-album-keychains', title: 'Photo Album Keychains', image: '/Romantic%20Mini%20Photo%20Album%20Keychain.png' },
-  { id: 'heart-lockets', title: 'Personalised Heart Lockets', image: '/Silver%20Heart%20Locket%20on%20Green%20Grass.png' },
-  { id: 'moon-lamps', title: 'Personalised Moon Lamps', image: '/Romantic%20Crescent%20Moon%20LED%20Lamp.png' },
-  { id: 'photo-mugs', title: 'Personalised Photo Mugs', image: '/Personalized%20Portrait%20Photo%20Mug.png' },
-  { id: 'baby-keepsakes', title: 'Baby Keepsake Lamps', image: '/Personalized%20Crystal%20Baby%20Keepsake%20Lamp.png' },
-  { id: 'wedding-plaques', title: 'Wedding Photo Plaques', image: '/Golden%20Happy%20Married%20Life%20Plaque.png' },
-];
+const whatsappNumber = '919788591998';
 
 function HomePage() {
   const location = useLocation();
@@ -116,10 +115,10 @@ function HomePage() {
   const giftParallaxY = useTransform(smoothGiftPointerY, [-1, 1], [-6, 6]);
   const sparkleParallaxX = useTransform(smoothGiftPointerX, [-1, 1], [-8, 8]);
   const sparkleParallaxY = useTransform(smoothGiftPointerY, [-1, 1], [-7, 7]);
-  const occasionRef = useRef(null);
   const [cartItems, setCartItems] = useState([]);
   const [wishlistIds, setWishlistIds] = useState(['photo-frame', 'teddy-bear']);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedBudgetRange, setSelectedBudgetRange] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -147,18 +146,22 @@ function HomePage() {
   };
 
   const filteredProducts = useMemo(() => {
-    if (selectedCategory === 'All') {
-      return collectionProducts;
+    if (selectedBudgetRange) {
+      return products.filter(
+        (product) => product.price >= selectedBudgetRange.min && product.price <= selectedBudgetRange.max,
+      );
     }
 
-    const matches = collectionProducts.filter(
+    if (selectedCategory === 'All') return products;
+
+    const matches = products.filter(
       (product) =>
         product.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
         product.name.toLowerCase().includes(selectedCategory.toLowerCase()),
     );
 
-    return matches.length > 0 ? matches : collectionProducts;
-  }, [selectedCategory, collectionProducts]);
+    return matches.length > 0 ? matches : products;
+  }, [selectedCategory, selectedBudgetRange]);
 
   const searchResults = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -213,12 +216,6 @@ function HomePage() {
     );
   };
 
-  const scrollOccasions = (direction) => {
-    if (!occasionRef.current) return;
-    const scrollAmount = occasionRef.current.clientWidth * 0.75;
-    occasionRef.current.scrollBy({ left: direction === 'next' ? scrollAmount : -scrollAmount, behavior: 'smooth' });
-  };
-
   const onNewsletterSubmit = (event) => {
     event.preventDefault();
     const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newsletterEmail);
@@ -245,14 +242,27 @@ function HomePage() {
   return (
     <div className="min-h-screen bg-[#FFFCF7] text-[#243746]">
       <header className="fixed inset-x-0 top-0 z-40 bg-[#183B56] shadow-[0_10px_35px_rgba(10,35,55,0.18)]">
+        <div className="border-b border-white/10 bg-[#102D44] px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.28em] text-white sm:text-[11px]">
+          <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-2">
+            <span className="text-[#EAF7FF]">Luxury gifting for every celebration</span>
+            <button
+              type="button"
+              onClick={() => document.getElementById('featured-products')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="rounded-full border border-white/40 bg-white/10 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-white transition hover:bg-white hover:text-[#183B56]"
+            >
+              Shop Now
+            </button>
+          </div>
+        </div>
+
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-3 py-3 sm:px-4 sm:py-4 lg:px-8">
-          <Link to="/" aria-label="Home">
+          <Link to="/" aria-label="Home" className="shrink-0">
             <Logo />
           </Link>
 
           <div className="hidden items-center gap-8 lg:flex">
             {navLinks.map((link) => (
-              <a key={link.label} href={link.href} className="group relative text-sm font-medium text-white transition hover:text-[#87CEEB]">
+              <a key={link.label} href={link.href} className="group relative text-sm font-medium tracking-[0.02em] text-white transition hover:text-[#87CEEB]">
                 <span>{link.label}</span>
                 <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-[#87CEEB] transition-transform duration-300 group-hover:scale-x-100" />
               </a>
@@ -310,25 +320,52 @@ function HomePage() {
         </AnimatePresence>
       </header>
 
-      <main id="home" className="pt-[76px]">
+      <main id="home" className="pt-[112px] sm:pt-[124px] lg:pt-[132px]">
         <section id="categories" className="bg-white py-5">
           <div className="mx-auto max-w-[1700px] px-3 lg:px-8">
-            <div className="flex snap-x snap-mandatory justify-start gap-4 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:justify-center">
-              {heroCategories.map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => setSelectedCategory(item.value)}
-                  className={`group min-w-[104px] shrink-0 snap-start text-center transition sm:min-w-[118px] ${selectedCategory === item.value ? 'opacity-100' : 'opacity-95'}`}
-                >
-                  <div className={`mx-auto mb-2 h-20 w-20 overflow-hidden rounded-full border-[3px] border-white bg-[#eef5f8] shadow-[0_10px_24px_rgba(24,59,86,0.14)] transition group-hover:scale-[1.02] sm:mb-3 sm:h-28 sm:w-28 sm:border-[4px] ${selectedCategory === item.value ? 'ring-4 ring-[#183B56]/10' : ''}`}>
-                    <img src={item.image} alt={item.label} className="h-full w-full object-cover" />
-                  </div>
-                  <span className="block text-center text-xs font-medium leading-tight text-[#183B56] sm:text-[15px]">
-                    {item.label}
-                  </span>
-                </button>
-              ))}
+            <div className="category-marquee" aria-label="Featured gift categories">
+              <div className="category-marquee__track">
+                <div className="category-marquee__group" aria-label="Gift categories list">
+                  {heroCategories.map((item) => (
+                    <button
+                      key={`${item.label}-a`}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategory(item.value);
+                        setSelectedBudgetRange(null);
+                      }}
+                      className={`group min-w-[118px] shrink-0 text-center transition sm:min-w-[132px] ${selectedCategory === item.value ? 'opacity-100' : 'opacity-95'}`}
+                    >
+                      <div className={`mx-auto mb-2 h-20 w-20 overflow-hidden rounded-full border-[3px] border-white bg-[#eef5f8] shadow-[0_10px_24px_rgba(24,59,86,0.14)] transition group-hover:scale-[1.02] sm:mb-3 sm:h-28 sm:w-28 sm:border-[4px] ${selectedCategory === item.value ? 'ring-4 ring-[#183B56]/10' : ''}`}>
+                        <img src={item.image} alt={item.label} className="h-full w-full object-cover" />
+                      </div>
+                      <span className="block text-center text-[12px] font-medium leading-tight text-[#183B56] sm:text-[14px]">
+                        {item.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <div className="category-marquee__group" aria-hidden="true">
+                  {heroCategories.map((item) => (
+                    <button
+                      key={`${item.label}-b`}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategory(item.value);
+                        setSelectedBudgetRange(null);
+                      }}
+                      className="group min-w-[118px] shrink-0 text-center transition opacity-95 sm:min-w-[132px]"
+                    >
+                      <div className="mx-auto mb-2 h-20 w-20 overflow-hidden rounded-full border-[3px] border-white bg-[#eef5f8] shadow-[0_10px_24px_rgba(24,59,86,0.14)] transition group-hover:scale-[1.02] sm:mb-3 sm:h-28 sm:w-28 sm:border-[4px]">
+                        <img src={item.image} alt={item.label} className="h-full w-full object-cover" />
+                      </div>
+                      <span className="block text-center text-[12px] font-medium leading-tight text-[#183B56] sm:text-[14px]">
+                        {item.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -348,331 +385,228 @@ function HomePage() {
           <div className="mx-auto max-w-7xl px-4 lg:px-8">
             <div className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <h2 className="font-display text-[clamp(2rem,8vw,3rem)] leading-tight text-[#183B56]">Our Collections</h2>
+                <h2 className="font-display text-[clamp(2rem,8vw,3rem)] leading-tight text-[#183B56]">
+                  {selectedBudgetRange
+                    ? selectedBudgetRange.amount
+                      ? `Gifts under ₹${selectedBudgetRange.amount}`
+                      : `Gifts ${selectedBudgetRange.label}`
+                    : 'Our Collections'}
+                </h2>
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedCategory('All')}
+                onClick={() => {
+                  setSelectedCategory('All');
+                  setSelectedBudgetRange(null);
+                }}
                 className="inline-flex items-center justify-center rounded-full border border-[#E5EDF2] bg-white px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#183B56] shadow-[0_10px_30px_rgba(24,59,86,0.04)] transition hover:bg-[#183B56] hover:text-white"
               >
                 All
               </button>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-              {filteredProducts.map((product, index) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  animationDelay={index * 0.12}
-                  isWishlisted={wishlistIds.includes(product.id)}
-                  onToggleWishlist={toggleWishlist}
-                  onAddToBag={handleAddToBag}
-                />
+            {filteredProducts.length ? (
+              <ProductCatalogue
+                products={filteredProducts}
+                wishlistIds={wishlistIds}
+                onToggleWishlist={toggleWishlist}
+                onAddToBag={handleAddToBag}
+              />
+            ) : (
+              <div className="mx-auto max-w-xl rounded-3xl border border-[#D9E7EF] bg-white/80 px-6 py-10 text-center shadow-[0_20px_60px_rgba(24,59,86,0.06)] sm:px-10">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#A9874D]">A little more to explore</p>
+                <h3 className="mt-3 font-display text-2xl text-[#183B56]">No gifts in this price range yet</h3>
+                <p className="mt-3 text-sm leading-6 text-[#667B88]">
+                  Browse all available gifts to find something special.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBudgetRange(null);
+                    setSelectedCategory('All');
+                  }}
+                  className="mt-6 rounded-full bg-[#183B56] px-6 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-[#087CC1]"
+                >
+                  Browse all gifts
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
+
+        <section id="occasions" className="overflow-hidden bg-[#F8FBFF] py-14 sm:py-20 lg:py-24">
+          <div className="mx-auto max-w-7xl px-4 lg:px-8">
+            <BestSellersCarousel
+              products={products}
+              wishlistIds={wishlistIds}
+              onToggleWishlist={toggleWishlist}
+              onAddToBag={handleAddToBag}
+              onProductClick={setSelectedProduct}
+            />
+            <div className="mx-auto mt-8 grid max-w-6xl grid-cols-1 gap-4 sm:mt-10 lg:grid-cols-2 lg:gap-6">
+              {[
+                {
+                  title: 'Farewell Gifts',
+                  description: 'Make their next chapter unforgettable.',
+                  buttonLabel: 'Shop farewell gifts',
+                  message: "Hi, I'm looking for a farewell gift.",
+                  image: '/gift-box-3d.png',
+                  detailImage: '/Golden%20Happy%20Married%20Life%20Plaque.png',
+                  background: 'from-[#EAF7FC] via-[#F2F5FF] to-[#EFEAFF]',
+                  imageAlt: 'Blue gift box and keepsake plaque',
+                },
+                {
+                  title: 'Customise',
+                  description: 'Make it personal with a gift made just for them.',
+                  buttonLabel: 'Customise a gift',
+                  message: "Hi, I'd like to customise a gift.",
+                  image: '/Personalized%20Portrait%20Photo%20Mug.png',
+                  detailImage: '/Romantic%20Mini%20Photo%20Album%20Keychain.png',
+                  background: 'from-[#FFF5EA] via-[#F8F1F8] to-[#EFEAFF]',
+                  imageAlt: 'Personalised photo mug and album keychain',
+                },
+              ].map((card) => (
+                <article
+                  key={card.title}
+                  className={`group relative isolate flex min-h-[250px] overflow-hidden rounded-[24px] bg-gradient-to-br ${card.background} p-6 shadow-[0_18px_48px_rgba(24,59,86,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_58px_rgba(24,59,86,0.14)] sm:min-h-[290px] sm:rounded-[30px] sm:p-8`}
+                >
+                  <div className="relative z-10 flex w-[58%] flex-col items-start justify-center sm:w-[55%]">
+                    <h3 className="font-display text-[clamp(1.7rem,4vw,2.7rem)] font-medium uppercase leading-tight tracking-wide text-[#102D44]">
+                      {card.title}
+                    </h3>
+                    <p className="mt-3 max-w-[19rem] text-sm leading-6 text-[#183B56] sm:mt-4 sm:text-base sm:leading-7">
+                      {card.description}
+                    </p>
+                    <a
+                      href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(card.message)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-lg bg-[#183B56] px-4 py-3 text-xs font-semibold text-white transition hover:bg-[#087CC1] sm:mt-7 sm:px-6 sm:text-sm"
+                    >
+                      <MessageCircle size={17} className="shrink-0 text-[#80E5A3]" />
+                      {card.buttonLabel}
+                    </a>
+                  </div>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex w-[47%] items-center justify-center sm:w-[45%]">
+                    <img
+                      src={card.image}
+                      alt={card.imageAlt}
+                      className="h-[88%] w-[90%] object-contain drop-shadow-[0_18px_18px_rgba(24,59,86,0.16)] transition duration-500 group-hover:scale-105"
+                    />
+                    <img
+                      src={card.detailImage}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute bottom-[8%] right-[4%] h-20 w-20 rounded-full border-[5px] border-white/90 object-cover shadow-[0_12px_28px_rgba(24,59,86,0.17)] transition duration-500 group-hover:-translate-y-2 sm:bottom-[9%] sm:right-[6%] sm:h-28 sm:w-28"
+                    />
+                  </div>
+                </article>
               ))}
             </div>
-          </div>
-        </section>
+            <div className="mx-auto mt-12 max-w-4xl sm:mt-16">
+              <div className="text-center">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#A9874D]">A lovely gift for every budget</p>
+                <h3 className="mt-2 font-display text-2xl text-[#183B56] sm:text-3xl">Shop by Budget</h3>
+              </div>
+              <div className="mt-6 grid grid-cols-3 gap-2 sm:mt-8 sm:gap-6">
+                {budgetRanges.map((range) => {
+                  const isSelected = selectedBudgetRange?.id === range.id;
 
-        <section id="signature-experience" className="mx-auto max-w-7xl px-4 py-14 sm:py-20 lg:px-8 lg:py-24">
-          <div className="relative overflow-hidden rounded-[28px] border border-[#e5f1f5] bg-[linear-gradient(115deg,#fffaf2_0%,#fffdf9_48%,#eaf7fc_100%)] px-4 py-8 shadow-[0_30px_80px_rgba(24,59,86,0.07)] sm:rounded-[36px] sm:px-6 sm:py-10 md:px-12 lg:py-14">
-            <div className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 rounded-full bg-[#87CEEB]/20 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-28 left-1/4 h-64 w-64 rounded-full bg-[#D6B77A]/10 blur-3xl" />
-            <div className="relative grid items-center gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
-              <motion.div
-                variants={giftSceneVariants}
-                initial={prefersReducedMotion ? 'visible' : 'hidden'}
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.3 }}
-                onPointerMove={handleGiftPointerMove}
-                onPointerLeave={handleGiftPointerLeave}
-                className="relative mx-auto h-[290px] w-full max-w-[460px] sm:h-[390px] lg:h-[410px]"
-                aria-label="A deep blue gift box filled with thoughtful gifts"
-                role="img"
-              >
-                <motion.div
-                  variants={giftDetailVariants}
-                  custom={0.45}
-                  style={{ translateX: glowParallaxX, translateY: glowParallaxY }}
-                  className="absolute inset-x-4 bottom-0 h-48 rounded-full bg-[radial-gradient(ellipse,rgba(8,124,193,0.22),rgba(8,124,193,0)_69%)] blur-2xl"
-                />
-                <motion.div
-                  variants={giftDetailVariants}
-                  custom={0.55}
-                  style={{ translateX: glowParallaxX, translateY: glowParallaxY }}
-                  className="absolute inset-x-5 top-2 h-[82%] rounded-full bg-[radial-gradient(ellipse_at_50%_66%,rgba(135,206,235,0.22),rgba(255,255,255,0)_62%)]"
-                />
-                <motion.div
-                  variants={giftDetailVariants}
-                  custom={0.8}
-                  style={{ translateX: glowParallaxX, translateY: glowParallaxY }}
-                  className="absolute left-1/2 top-[30%] z-[2] h-36 w-52 -translate-x-1/2 rounded-full bg-[#48cafa]/20 blur-3xl sm:h-44 sm:w-64"
-                />
-
-                <motion.div
-                  variants={giftBoxVariants}
-                  style={{ translateX: boxParallaxX, translateY: boxParallaxY }}
-                  className="absolute bottom-[38px] left-1/2 z-[4] h-[156px] w-[min(76%,340px)] -translate-x-1/2 overflow-hidden rounded-b-[24px] border-x border-b border-[#6cc8ef]/55 bg-[linear-gradient(100deg,#071f37_0%,#123e62_18%,#1c5b83_48%,#0c3557_78%,#061d34_100%)] shadow-[inset_0_12px_24px_rgba(1,14,27,0.65),0_34px_42px_rgba(13,49,77,0.34)] sm:h-[176px]"
-                >
-                  <div className="absolute inset-x-0 top-0 h-10 rounded-[50%] border border-[#9ce6ff]/50 bg-[radial-gradient(ellipse_at_50%_0%,#59bfe9_0%,#174f76_54%,#092844_100%)] shadow-[inset_0_8px_14px_rgba(2,20,36,0.62)]" />
-                  <div className="absolute inset-y-0 left-[42%] z-[2] w-[18%] bg-[linear-gradient(90deg,#3c9cc8,#91ddf8_25%,#d0f4ff_47%,#65c4e9_70%,#2b83af)] shadow-[0_0_26px_rgba(135,206,235,0.3)]" />
-                  <div className="absolute inset-y-0 left-[43%] z-[3] w-[16%] bg-[linear-gradient(90deg,rgba(255,255,255,0.1),rgba(255,255,255,0.44)_46%,rgba(255,255,255,0.06))]" />
-                  <div className="absolute inset-x-0 bottom-0 h-8 bg-[linear-gradient(180deg,rgba(3,23,41,0),rgba(2,17,32,0.55))]" />
-                  <div className="absolute inset-x-0 bottom-0 h-1 border-t border-white/15" />
-                  <div className="absolute inset-x-0 bottom-0 z-[8] h-[58px] bg-[linear-gradient(180deg,rgba(7,33,55,0),rgba(5,28,48,0.76))]" />
-                </motion.div>
-                <motion.div
-                  variants={giftBoxVariants}
-                  style={{ translateX: boxParallaxX, translateY: boxParallaxY }}
-                  className="absolute bottom-[183px] left-1/2 z-[3] h-8 w-[min(80%,356px)] -translate-x-1/2 rounded-[50%] border border-[#8fd6f5]/65 bg-[linear-gradient(180deg,#78c9ed_0%,#23688f_48%,#092c4c_100%)] shadow-[0_9px_16px_rgba(8,40,67,0.27)]"
-                />
-
-                <motion.div
-                  variants={giftLidVariants}
-                  style={{ translateX: boxParallaxX, transformPerspective: 700 }}
-                  className="absolute bottom-[210px] left-1/2 z-20 h-[56px] w-[min(82%,360px)] -translate-x-1/2 rounded-[9px] border border-[#78c8ec]/65 bg-[linear-gradient(160deg,#276d96_0%,#174e73_24%,#0b3455_60%,#061f38_100%)] shadow-[inset_0_2px_4px_rgba(255,255,255,0.28),0_22px_28px_rgba(7,38,64,0.3)] sm:bottom-[224px] sm:h-[64px]"
-                >
-                  <div className="absolute inset-y-0 left-[42%] w-[18%] bg-[linear-gradient(90deg,#51a9d3,#a8eaff_24%,#ddf8ff_47%,#6dc6e9_76%,#3187b4)] shadow-[0_0_22px_rgba(135,206,235,0.34)]" />
-                  <div className="absolute -top-9 left-[34%] h-12 w-[68px] -rotate-[18deg] rounded-[100%_18%_100%_18%] border-[7px] border-[#87CEEB] bg-[linear-gradient(130deg,rgba(207,245,255,0.78),rgba(56,157,201,0.86)_60%,rgba(16,87,127,0.9))] shadow-[inset_0_2px_5px_rgba(255,255,255,0.65),0_4px_10px_rgba(4,43,68,0.25)]" />
-                  <div className="absolute -top-9 left-[50%] h-12 w-[68px] rotate-[24deg] rounded-[18%_100%_18%_100%] border-[7px] border-[#b4ecff] bg-[linear-gradient(130deg,rgba(220,250,255,0.78),rgba(78,178,218,0.88)_60%,rgba(18,99,139,0.92))] shadow-[inset_0_2px_5px_rgba(255,255,255,0.65),0_4px_10px_rgba(4,43,68,0.25)]" />
-                  <div className="absolute -top-1 left-[48%] h-6 w-6 rounded-full border border-white/60 bg-[radial-gradient(circle_at_35%_30%,#e4faff,#62c5eb_65%,#1676a7)] shadow-[0_2px_8px_rgba(4,43,68,0.3)]" />
-                </motion.div>
-
-                <motion.div variants={giftItemsVariants} className="absolute inset-0">
-                  {[
-                    { image: '/Romantic%20Crescent%20Moon%20LED%20Lamp.png', alt: 'Personalised crescent moon lamp', className: 'left-[25%] top-[18%] w-[22%]', rotate: -5 },
-                    { image: '/Romantic%20Mini%20Photo%20Album%20Keychain.png', alt: 'Personalised photo album keychain', className: 'left-[42%] top-[10%] w-[22%]', rotate: 2 },
-                    { image: '/Silver%20Heart%20Locket%20on%20Green%20Grass.png', alt: 'Romantic heart locket', className: 'left-[59%] top-[18%] w-[22%]', rotate: 5 },
-                    { image: '/Golden%20Happy%20Married%20Life%20Plaque.png', alt: 'Personalised wedding photo keepsake', className: 'left-[76%] top-[16%] w-[22%]', rotate: -3 },
-                  ].map((item) => (
-                    <motion.img
-                      key={item.alt}
-                      variants={giftItemVariants}
-                      src={item.image}
-                      alt={item.alt}
-                      whileHover={prefersReducedMotion ? undefined : { scale: 1.04 }}
-                      className={`absolute z-30 aspect-square h-auto max-h-[104px] -translate-x-1/2 object-cover drop-shadow-[0_12px_15px_rgba(5,33,53,0.28)] sm:max-h-[120px] [mask-image:radial-gradient(ellipse_at_center,black_42%,rgba(0,0,0,0.78)_62%,transparent_78%)] ${item.className}`}
-                      style={{ rotate: `${item.rotate}deg`, translateX: giftParallaxX, translateY: giftParallaxY }}
-                    />
-                  ))}
-
-                  <motion.div
-                    variants={giftItemVariants}
-                    whileHover={prefersReducedMotion ? undefined : { y: -3, rotate: -5 }}
-                    style={{ translateX: giftParallaxX, translateY: giftParallaxY }}
-                    className="absolute bottom-[28px] left-[16%] z-[6] h-[68px] w-[60px] -rotate-[8deg] rounded-[5px] border border-[#a5e6ff]/70 bg-[linear-gradient(135deg,#478bb0_0%,#17628c_45%,#0a3455_100%)] shadow-[inset_0_2px_5px_rgba(255,255,255,0.25),0_18px_22px_rgba(8,39,64,0.28)] sm:h-[76px] sm:w-[66px]"
-                  >
-                    <div className="absolute inset-y-0 left-[41%] w-[18%] bg-[linear-gradient(90deg,#77c8e8,#d0f4ff_48%,#5bb0d4)]" />
-                    <div className="absolute -top-2 left-[31%] h-4 w-7 rounded-full border-[3px] border-[#b8efff] bg-[#4aa5d0]" />
-                  </motion.div>
-                  <motion.div
-                    variants={giftItemVariants}
-                    whileHover={prefersReducedMotion ? undefined : { y: -3, rotate: 5 }}
-                    style={{ translateX: giftParallaxX, translateY: giftParallaxY }}
-                    className="absolute bottom-[35px] right-[15%] z-[6] h-[58px] w-[52px] rotate-[8deg] rounded-[5px] border border-[#a5e6ff]/70 bg-[linear-gradient(135deg,#5aa9cd_0%,#1e6f96_45%,#0a3455_100%)] shadow-[inset_0_2px_5px_rgba(255,255,255,0.25),0_18px_22px_rgba(8,39,64,0.28)] sm:h-[66px] sm:w-[58px]"
-                  >
-                    <div className="absolute inset-y-0 left-[41%] w-[18%] bg-[linear-gradient(90deg,#8bd8f1,#ddf8ff_48%,#5bb0d4)]" />
-                    <div className="absolute -top-2 left-[31%] h-4 w-7 rounded-full border-[3px] border-[#b8efff] bg-[#4aa5d0]" />
-                  </motion.div>
-                </motion.div>
-
-                {[
-                  { left: '12%', top: '25%', delay: 1.2, size: 15 },
-                  { left: '76%', top: '18%', delay: 1.45, size: 12 },
-                  { left: '88%', top: '49%', delay: 1.7, size: 14 },
-                  { left: '19%', top: '58%', delay: 1.95, size: 10 },
-                ].map((sparkle) => (
-                  <motion.span
-                    key={`${sparkle.left}-${sparkle.top}`}
-                    variants={giftDetailVariants}
-                    custom={prefersReducedMotion ? 0 : sparkle.delay}
-                    className="absolute z-30 hidden text-[#087CC1] drop-shadow-[0_0_10px_rgba(135,206,235,0.9)] sm:block"
-                    style={{ left: sparkle.left, top: sparkle.top, fontSize: sparkle.size, translateX: sparkleParallaxX, translateY: sparkleParallaxY }}
-                    aria-hidden="true"
-                  >
-                    <Sparkles size={sparkle.size} />
-                  </motion.span>
-                ))}
-                <motion.span
-                  variants={giftDetailVariants}
-                  custom={prefersReducedMotion ? 0 : 1.5}
-                  className="absolute left-[23%] top-[42%] z-30 hidden text-[#63c5ed] sm:block"
-                  style={{ translateX: sparkleParallaxX, translateY: sparkleParallaxY }}
-                  aria-hidden="true"
-                >
-                  <Heart size={17} fill="currentColor" />
-                </motion.span>
-                <motion.span
-                  variants={giftDetailVariants}
-                  custom={prefersReducedMotion ? 0 : 1.8}
-                  className="absolute right-[19%] top-[57%] z-30 hidden text-[#87CEEB] sm:block"
-                  style={{ translateX: sparkleParallaxX, translateY: sparkleParallaxY }}
-                  aria-hidden="true"
-                >
-                  <Heart size={13} fill="currentColor" />
-                </motion.span>
-              </motion.div>
-
-              <div className="relative z-10">
-                <motion.p
-                  initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.35 }}
-                  transition={{ duration: prefersReducedMotion ? 0 : 0.55 }}
-                  className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[#087CC1]"
-                >
-                  Signature experience
-                </motion.p>
-                <motion.h2
-                  initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.35 }}
-                  transition={{ duration: prefersReducedMotion ? 0 : 0.7, delay: prefersReducedMotion ? 0 : 0.08, ease: [0.22, 1, 0.36, 1] }}
-                  className="mt-3 max-w-[12ch] font-display leading-[1.06] text-[#183B56]"
-                  style={{ fontSize: 'clamp(2.25rem, 4.15vw, 3.6rem)' }}
-                >
-                  <span className="lg:block">A Gift, Wrapped</span>
-                  <span className="lg:block">With Love.</span>
-                </motion.h2>
-                <div className="my-6 flex items-center gap-3 text-[#D6B77A]" aria-hidden="true">
-                  <span className="h-px w-20 bg-[#D6B77A]/60" />
-                  <Heart size={15} fill="currentColor" />
-                  <span className="h-px w-20 bg-[#D6B77A]/60" />
-                </div>
-                <motion.p
-                  initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.35 }}
-                  transition={{ duration: prefersReducedMotion ? 0 : 0.6, delay: prefersReducedMotion ? 0 : 0.18 }}
-                  className="max-w-xl text-base leading-8 text-[#4b6478] sm:text-lg"
-                >
-                  It&apos;s not just a gift. It&apos;s how you make them feel.
-                </motion.p>
-                <div className="mt-7 flex flex-wrap gap-2.5 text-sm text-[#183B56]">
-                  {[
-                    { label: 'Handpicked details', icon: Gift },
-                    { label: 'Elegant wrapping', icon: Sparkles },
-                    { label: 'Thoughtful surprises', icon: Heart },
-                  ].map(({ label, icon: Icon }, index) => (
-                    <motion.span
-                      key={label}
-                      initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, amount: 0.35 }}
-                      transition={{ duration: prefersReducedMotion ? 0 : 0.5, delay: prefersReducedMotion ? 0 : 0.28 + index * 0.12 }}
-                      className="inline-flex items-center gap-2 rounded-full border border-[#183B56]/35 bg-white/65 px-3.5 py-2.5"
+                  return (
+                    <button
+                      key={range.id}
+                      type="button"
+                      aria-pressed={isSelected}
+                      aria-label={range.amount ? `Show gifts under ₹${range.amount}` : `Show gifts from ₹${range.min} to ₹${range.max}`}
+                      onClick={() => {
+                        setSelectedCategory('All');
+                        setSelectedBudgetRange(range);
+                        document.getElementById('featured-products')?.scrollIntoView({
+                          behavior: prefersReducedMotion ? 'auto' : 'smooth',
+                          block: 'start',
+                        });
+                      }}
+                      className="group flex flex-col items-center text-center"
                     >
-                      <Icon size={15} className="text-[#087CC1]" />
-                      {label}
-                    </motion.span>
-                  ))}
-                </div>
-                <motion.a
-                  initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.35 }}
-                  transition={{ duration: prefersReducedMotion ? 0 : 0.55, delay: prefersReducedMotion ? 0 : 0.68 }}
-                  href="#featured-products"
-                  className="mt-8 inline-flex items-center gap-2 font-display text-xl font-semibold text-[#183B56] transition hover:text-[#087CC1]"
-                >
-                  Discover the magic
-                  <ArrowRight size={19} />
-                </motion.a>
+                      <span className={`flex aspect-square w-full max-w-[174px] flex-col items-center justify-center rounded-full border-[5px] border-white bg-gradient-to-br from-[#183B56] via-[#21658A] to-[#87CEEB] px-2 text-white shadow-[0_14px_34px_rgba(24,59,86,0.2)] ring-1 ring-[#87CEEB]/40 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_20px_40px_rgba(24,59,86,0.28)] group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#D6B77A] sm:border-[7px] ${isSelected ? 'scale-105 ring-4 ring-[#D6B77A]' : ''}`}>
+                        <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#DDF5FF] sm:text-xs">
+                          {range.amount ? 'Under' : 'Budget'}
+                        </span>
+                        <span className="mt-1 font-display text-[clamp(1.05rem,3.8vw,2rem)] leading-tight">
+                          {range.amount ? `₹${range.amount}` : `₹${range.min}–${range.max}`}
+                        </span>
+                      </span>
+                      <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#183B56] sm:mt-3 sm:text-xs">
+                        {range.amount ? 'And under' : 'Gift range'}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
         </section>
 
-        <section id="occasions" className="mx-auto max-w-7xl px-4 py-14 sm:py-20 lg:px-8 lg:py-24">
-          <div className="mb-7 flex items-end justify-between gap-3 sm:mb-10 sm:gap-4">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#5d7383]">Made personal</p>
-              <h2 className="mt-2 font-display text-[clamp(2rem,8vw,3rem)] leading-tight text-[#183B56] sm:mt-3">Customized Gifts</h2>
-            </div>
-            <div className="hidden items-center gap-3 md:flex">
-              <button type="button" onClick={() => scrollOccasions('prev')} className="flex h-12 w-12 items-center justify-center rounded-full border border-[#D9E7EF] bg-white text-[#183B56] shadow-sm">
-                <ChevronLeft size={18} />
-              </button>
-              <button type="button" onClick={() => scrollOccasions('next')} className="flex h-12 w-12 items-center justify-center rounded-full border border-[#D9E7EF] bg-white text-[#183B56] shadow-sm">
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
-
-          <div ref={occasionRef} className="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6">
-            {customizedGiftCards.map((item) => (
-              <div key={item.id} className="group relative w-[min(84vw,360px)] min-w-[min(84vw,290px)] snap-start overflow-hidden rounded-[24px] sm:rounded-[28px] md:w-[360px] md:min-w-[360px]">
-                <img src={item.image} alt={item.title} className="h-[340px] w-full object-cover transition duration-500 group-hover:scale-105 sm:h-[420px]" />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,18,27,0.16),rgba(10,18,27,0.78))]" />
-                <div className="absolute inset-x-0 bottom-0 p-6">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#EAF7FC]">Inba&apos;s Mr &amp; Mrs Gifts</p>
-                  <h3 className="mt-2 font-display text-3xl text-white">{item.title}</h3>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section id="story" className="mx-auto max-w-7xl px-4 py-14 sm:py-20 lg:px-8 lg:py-24">
-          <div className="grid overflow-hidden rounded-[34px] bg-[#F9FBFD] shadow-[0_30px_80px_rgba(24,59,86,0.08)] lg:grid-cols-2">
-            <div className="h-[280px] overflow-hidden sm:h-[360px] lg:h-full lg:min-h-[420px]">
-              <img
-                src="/image.png"
-                alt="Gift story"
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="flex flex-col justify-center p-6 sm:p-8 md:p-12">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#5d7383]">Our story</p>
-              <h2 className="mt-3 font-display text-[clamp(2rem,8vw,3rem)] leading-tight text-[#183B56]">More Than a Gift. A Feeling.</h2>
-              <p className="mt-5 text-base leading-7 text-[#4b6478] sm:mt-6 sm:text-lg sm:leading-8">
-                We believe the most meaningful gifts do more than surprise. They bring people closer, celebrate little victories, and turn ordinary moments into memories worth keeping.
-              </p>
-              <p className="mt-4 text-base leading-7 text-[#4b6478] sm:text-lg sm:leading-8">
-                Thoughtful curation, premium presentation, and a little extra joy — that&apos;s the difference between a wrapped object and a cherished memory.
-              </p>
-              <button type="button" onClick={() => setCustomiseOpen(true)} className="mt-8 inline-flex w-fit items-center gap-2 rounded-full border border-[#D9E7EF] bg-white px-6 py-3 text-sm font-medium uppercase tracking-[0.12em] text-[#183B56]">
-                Discover the emotion
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section className="relative overflow-hidden bg-[#183B56] bg-[url('/background.png')] bg-cover bg-center py-14 text-white sm:py-20 lg:py-24">
+        <section className="relative overflow-hidden bg-[#183B56] bg-[url('/background.png')] bg-cover bg-center py-10 text-white sm:py-12">
           <div className="pointer-events-none absolute inset-0 bg-[#102D44]/75" />
-          <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
-            <div className="mb-8 flex flex-col items-start justify-between gap-5 sm:mb-12 sm:flex-row sm:items-end sm:gap-4">
+          {!prefersReducedMotion && (
+            <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+              <motion.span
+                className="absolute left-[8%] top-[24%] text-2xl drop-shadow-[0_4px_12px_rgba(135,206,235,0.5)] sm:text-3xl"
+                animate={{ x: [0, 100, 220, 320], y: [0, -22, 18, -8], rotate: [-12, 12, -8, 8] }}
+                transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                🦋
+              </motion.span>
+              <motion.span
+                className="absolute right-[10%] top-[58%] text-xl drop-shadow-[0_4px_12px_rgba(214,183,122,0.45)] sm:text-2xl"
+                animate={{ x: [0, -90, -190, -270], y: [0, 20, -14, 8], rotate: [10, -12, 8, -6] }}
+                transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
+              >
+                🦋
+              </motion.span>
+              <motion.span
+                className="absolute left-[48%] top-[12%] text-lg opacity-75 sm:text-xl"
+                animate={{ x: [0, 70, 130, 30], y: [0, 24, -12, 0], rotate: [-8, 8, -12, 4] }}
+                transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+              >
+                🦋
+              </motion.span>
+            </div>
+          )}
+          <div className="relative mx-auto max-w-5xl px-4 lg:px-8">
+            <div className="mb-5 flex flex-col items-start justify-between gap-3 sm:mb-6 sm:flex-row sm:items-end sm:gap-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#cfe7f6]">Customer love</p>
-                <h2 className="mt-3 max-w-[16ch] font-display text-[clamp(2rem,8vw,3rem)] leading-tight text-white">Loved by thoughtful people.</h2>
+                <h2 className="mt-2 max-w-[16ch] font-display text-[clamp(1.65rem,5vw,2.4rem)] leading-tight text-white">Loved by thoughtful people.</h2>
               </div>
               <div className="flex gap-3 self-end sm:self-auto">
-                <button type="button" onClick={() => setActiveTestimonial((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1))} className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white">
+                <button type="button" onClick={() => setActiveTestimonial((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1))} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition hover:bg-white/15">
                   <ChevronLeft size={18} />
                 </button>
-                <button type="button" onClick={() => setActiveTestimonial((prev) => (prev + 1) % testimonials.length)} className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white">
+                <button type="button" onClick={() => setActiveTestimonial((prev) => (prev + 1) % testimonials.length)} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition hover:bg-white/15">
                   <ChevronRight size={18} />
                 </button>
               </div>
             </div>
 
-            <div className="rounded-[26px] bg-white/10 p-5 backdrop-blur-sm sm:rounded-[32px] sm:p-8 md:p-10">
-              <div className="flex items-center gap-1 text-[#D6B77A]">
-                {[...Array(testimonials[activeTestimonial].rating)].map((_, index) => (
-                  <Star key={index} size={18} fill="currentColor" />
-                ))}
+            <div className="rounded-[22px] border border-white/10 bg-white/10 p-4 backdrop-blur-sm sm:rounded-[26px] sm:p-6 md:p-7">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-1 text-[#D6B77A]">
+                  {[...Array(testimonials[activeTestimonial].rating)].map((_, index) => (
+                    <Star key={index} size={15} fill="currentColor" />
+                  ))}
+                </div>
+                <MessageCircleHeart size={20} className="shrink-0 text-[#87CEEB]" />
               </div>
-              <p className="mt-5 max-w-3xl text-lg leading-8 text-[#edf8ff] sm:mt-6 sm:text-2xl sm:leading-10 md:text-3xl">
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-[#edf8ff] sm:mt-4 sm:text-base sm:leading-7">
                 “{testimonials[activeTestimonial].review}”
               </p>
-              <div className="mt-8 flex items-center justify-between gap-4 border-t border-white/10 pt-6">
+              <div className="mt-5 flex items-center justify-between gap-4 border-t border-white/10 pt-4">
                 <div>
-                  <p className="font-display text-2xl text-white">{testimonials[activeTestimonial].name}</p>
-                  <p className="mt-1 text-sm text-[#cfe7f6]">{testimonials[activeTestimonial].product}</p>
-                </div>
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#87CEEB]/15 text-[#87CEEB]">
-                  <MessageCircleHeart size={24} />
+                  <p className="font-display text-lg text-white sm:text-xl">{testimonials[activeTestimonial].name}</p>
+                  <p className="mt-1 text-xs text-[#cfe7f6] sm:text-sm">{testimonials[activeTestimonial].product}</p>
                 </div>
               </div>
             </div>
@@ -740,7 +674,6 @@ function HomePage() {
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#87CEEB]">Support</p>
             <ul className="mt-5 space-y-3 text-sm text-[#EAF7FC]">
-              <li><a href="#story">About Us</a></li>
               <li><a href="#">Newsletter</a></li>
               <li><a href="#">Privacy Policy</a></li>
               <li><a href="#">Terms</a></li>
