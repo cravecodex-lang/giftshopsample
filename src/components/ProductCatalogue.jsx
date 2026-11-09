@@ -72,15 +72,12 @@ function ProductCatalogue({ products, wishlistIds, onToggleWishlist, onAddToBag 
   const [flip, setFlip] = useState(null);
   const [bookState, setBookState] = useState('closed');
   const touchStartX = useRef(null);
-  const limit = 2;
-  const pageStep = isMobile ? limit : 1;
-  const lastPageIndex = isMobile
-    ? Math.max(0, (Math.ceil(products.length / limit) - 1) * limit)
-    : Math.max(0, products.length - limit);
+  const visiblePageCount = isMobile ? 1 : 2;
+  const lastPageIndex = Math.max(0, products.length - visiblePageCount);
   const safePageIndex = Math.min(pageIndex, lastPageIndex);
   const visiblePageIndex = flip ? Math.min(flip.targetIndex, lastPageIndex) : safePageIndex;
   const displayedProducts = Array.from(
-    { length: limit },
+    { length: visiblePageCount },
     (_, index) => products[visiblePageIndex + index],
   );
 
@@ -89,20 +86,20 @@ function ProductCatalogue({ products, wishlistIds, onToggleWishlist, onAddToBag 
     const handleViewportChange = (event) => {
       setIsMobile(event.matches);
       setFlip(null);
-      setPageIndex((index) => index - (index % 2));
+      setPageIndex((index) => Math.min(index, Math.max(0, products.length - (event.matches ? 1 : 2))));
     };
 
     mediaQuery.addEventListener('change', handleViewportChange);
     return () => mediaQuery.removeEventListener('change', handleViewportChange);
-  }, []);
+  }, [products.length]);
 
   const turnPage = (direction) => {
     if (flip) return;
     const currentIndex = Math.min(pageIndex, lastPageIndex);
     const isNext = direction === 'next';
     const targetIndex = isNext
-      ? Math.min(currentIndex + pageStep, lastPageIndex)
-      : Math.max(currentIndex - pageStep, 0);
+      ? Math.min(currentIndex + 1, lastPageIndex)
+      : Math.max(currentIndex - 1, 0);
     if (targetIndex === currentIndex) {
       if (isNext && bookState === 'open' && currentIndex >= lastPageIndex) setBookState('closing');
       return;
@@ -161,11 +158,19 @@ function ProductCatalogue({ products, wishlistIds, onToggleWishlist, onAddToBag 
     const clickedPage = event.target.closest('.catalogue-page:not(.catalogue-page--blank)');
     if (!clickedPage) return;
 
+    if (isMobile) {
+      const { left, width } = clickedPage.getBoundingClientRect();
+      turnPage(event.clientX >= left + width / 2 ? 'next' : 'previous');
+      return;
+    }
+
     const clickedPageIndex = Number(clickedPage.dataset.pageIndex);
     turnPage(clickedPageIndex % 2 === 0 ? 'previous' : 'next');
   };
 
-  const pageLabel = `Pages ${visiblePageIndex + 1}–${Math.min(visiblePageIndex + limit, products.length)} of ${products.length}`;
+  const pageLabel = isMobile
+    ? `Page ${visiblePageIndex + 1} of ${products.length}`
+    : `Pages ${visiblePageIndex + 1}–${Math.min(visiblePageIndex + visiblePageCount, products.length)} of ${products.length}`;
   const isAtStart = safePageIndex <= 0;
   const isAtEnd = safePageIndex >= lastPageIndex;
   const isBookBusy = bookState === 'opening' || bookState === 'closing';

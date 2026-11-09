@@ -886,6 +886,104 @@
   .catalogue__page-count {
     font-size: 11px;
   }
+
+  .catalogue-book.is-mobile .catalogue-book__spread {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .catalogue-book.is-mobile .catalogue-book__spine {
+    display: none;
+  }
+
+  .catalogue-book.is-mobile .catalogue-book__pages,
+  .catalogue-book.is-mobile .catalogue-page {
+    height: 440px;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page {
+    padding: 16px 14px 22px;
+    background: linear-gradient(180deg, #fffefa, #fffdf8);
+    box-shadow: inset 1px 0 rgb(141 111 70 / 16%) !important;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__topline {
+    gap: 8px;
+    font-size: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__topline span:last-child {
+    max-width: 55%;
+    font-size: 7px;
+    letter-spacing: 0.03em;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__photograph {
+    height: 180px;
+    margin: 12px 0 11px;
+    border-radius: 12px;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__badge {
+    top: 8px;
+    left: 8px;
+    padding: 5px 8px;
+    font-size: 8px;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__rating svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__details h3 {
+    margin-top: 6px;
+    font-size: clamp(16px, 4.5vw, 19px);
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__pricing {
+    min-height: 28px;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__pricing strong {
+    font-size: 15px;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__pricing del {
+    font-size: 10px;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__pricing > span {
+    padding: 4px 6px;
+    font-size: 7px;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__actions {
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__wishlist,
+  .catalogue-book.is-mobile .catalogue-page__add {
+    min-height: 38px;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__wishlist {
+    width: 38px;
+    flex-basis: 38px;
+  }
+
+  .catalogue-book.is-mobile .catalogue-page__add {
+    gap: 6px;
+    padding: 0 10px;
+    font-size: 10px;
+  }
+
+  .catalogue-book.is-mobile .catalogue-flip-sheet {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

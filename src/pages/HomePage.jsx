@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
-import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
-import { Camera, ChevronLeft, ChevronRight, Heart, Menu, MessageCircle, MessageCircleHeart, Search, ShoppingBag, Star, TrendingUp, X } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
+import { Camera, Heart, Menu, MessageCircle, MessageCircleHeart, Search, ShoppingBag, Star, TrendingUp, X } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BestSellersCarousel from '../components/BestSellersCarousel';
 import CartDrawer from '../components/CartDrawer';
@@ -99,6 +99,115 @@ const collectionProducts = heroCategories.slice(0, 4).map((category, index) => (
 
 const whatsappNumber = '919788591998';
 
+function CustomerReviews({ prefersReducedMotion }) {
+  const sectionRef = useRef(null);
+  const [activeReview, setActiveReview] = useState(0);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end end'],
+  });
+
+  useMotionValueEvent(scrollYProgress, 'change', (progress) => {
+    const nextReview = Math.min(testimonials.length - 1, Math.floor(progress * testimonials.length));
+    setActiveReview((current) => current === nextReview ? current : nextReview);
+  });
+
+  const review = testimonials[activeReview];
+
+  return (
+    <section
+      ref={sectionRef}
+      id="customer-reviews"
+      className="relative min-h-[500svh] overflow-clip bg-[#183B56] text-white"
+      aria-label="Customer reviews"
+    >
+      <div className="sticky top-0 -mb-[100svh] h-svh overflow-hidden bg-[url('/background.png')] bg-cover bg-center">
+        <div className="absolute inset-0 bg-[#102D44]/75" />
+        {!prefersReducedMotion && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+            <motion.span
+              className="absolute left-[8%] top-[24%] text-2xl drop-shadow-[0_4px_12px_rgba(135,206,235,0.5)] sm:text-3xl"
+              animate={{ x: [0, 100, 220, 320], y: [0, -22, 18, -8], rotate: [-12, 12, -8, 8] }}
+              transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              🦋
+            </motion.span>
+            <motion.span
+              className="absolute right-[10%] top-[58%] text-xl drop-shadow-[0_4px_12px_rgba(214,183,122,0.45)] sm:text-2xl"
+              animate={{ x: [0, -90, -190, -270], y: [0, 20, -14, 8], rotate: [10, -12, 8, -6] }}
+              transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
+            >
+              🦋
+            </motion.span>
+            <motion.span
+              className="absolute left-[48%] top-[12%] text-lg opacity-75 sm:text-xl"
+              animate={{ x: [0, 70, 130, 30], y: [0, 24, -12, 0], rotate: [-8, 8, -12, 4] }}
+              transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+            >
+              🦋
+            </motion.span>
+          </div>
+        )}
+      </div>
+      <div className="sticky top-[76px] mx-auto flex min-h-[calc(100svh-76px)] max-w-5xl flex-col justify-center px-4 py-8 lg:px-8">
+        <div className="mb-5 flex items-end justify-between gap-4 sm:mb-6">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#cfe7f6]">Customer love</p>
+            <h2 className="mt-2 max-w-[16ch] font-display text-[clamp(1.65rem,5vw,2.4rem)] leading-tight text-white">Loved by thoughtful people.</h2>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              to="/write-review"
+              className="inline-flex min-h-9 items-center rounded-full border border-white/25 bg-white/10 px-3 text-[10px] font-semibold text-white transition hover:bg-white/20"
+            >
+              Write a Review
+            </Link>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[10px] font-semibold tracking-[0.12em] text-[#d9f1fc]">
+              {String(activeReview + 1).padStart(2, '0')} <span className="text-white/45">/ {String(testimonials.length).padStart(2, '0')}</span>
+            </span>
+          </div>
+        </div>
+
+        <div className="relative min-h-[210px] sm:min-h-[260px]">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.article
+              key={activeReview}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 22 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={prefersReducedMotion ? undefined : { opacity: 0, y: -18 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: 'easeOut' }}
+              className="absolute inset-0 flex flex-col justify-center rounded-[22px] border border-white/10 bg-white/10 p-4 backdrop-blur-sm sm:rounded-[26px] sm:p-6 md:p-7"
+              aria-label={`Review ${activeReview + 1} of ${testimonials.length}`}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-1 text-[#D6B77A]" aria-label={`${review.rating} out of 5 stars`}>
+                  {[...Array(review.rating)].map((_, index) => (
+                    <Star key={index} size={15} fill="currentColor" />
+                  ))}
+                </div>
+                <MessageCircleHeart size={20} className="shrink-0 text-[#87CEEB]" />
+              </div>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-[#edf8ff] sm:mt-4 sm:text-base sm:leading-7">
+                “{review.review}”
+              </p>
+              <div className="mt-5 flex items-center justify-between gap-4 border-t border-white/10 pt-4">
+                <div>
+                  <p className="font-display text-lg text-white sm:text-xl">{review.name}</p>
+                  <p className="mt-1 text-xs text-[#cfe7f6] sm:text-sm">{review.product}</p>
+                </div>
+              </div>
+            </motion.article>
+          </AnimatePresence>
+        </div>
+
+        <p className="mt-4 text-center text-[10px] font-medium tracking-wide text-[#cfe7f6]/75">
+          Keep scrolling to read the next story
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function HomePage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -130,7 +239,6 @@ function HomePage() {
   const [customiseOpen, setCustomiseOpen] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterMessage, setNewsletterMessage] = useState('');
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [heroOffset, setHeroOffset] = useState({ x: 0, y: 0 });
 
   const handleGiftPointerMove = (event) => {
@@ -393,16 +501,6 @@ function HomePage() {
                     : 'Our Collections'}
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedCategory('All');
-                  setSelectedBudgetRange(null);
-                }}
-                className="inline-flex items-center justify-center rounded-full border border-[#E5EDF2] bg-white px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#183B56] shadow-[0_10px_30px_rgba(24,59,86,0.04)] transition hover:bg-[#183B56] hover:text-white"
-              >
-                All
-              </button>
             </div>
 
             {filteredProducts.length ? (
@@ -435,7 +533,7 @@ function HomePage() {
         </section>
 
 
-        <section id="occasions" className="overflow-hidden bg-[#F8FBFF] py-14 sm:py-20 lg:py-24">
+        <section id="occasions" className="overflow-hidden bg-[#F8FBFF] py-10 sm:py-20 lg:py-24">
           <div className="mx-auto max-w-7xl px-4 lg:px-8">
             <BestSellersCarousel
               products={products}
@@ -548,70 +646,7 @@ function HomePage() {
           </div>
         </section>
 
-        <section className="relative overflow-hidden bg-[#183B56] bg-[url('/background.png')] bg-cover bg-center py-10 text-white sm:py-12">
-          <div className="pointer-events-none absolute inset-0 bg-[#102D44]/75" />
-          {!prefersReducedMotion && (
-            <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-              <motion.span
-                className="absolute left-[8%] top-[24%] text-2xl drop-shadow-[0_4px_12px_rgba(135,206,235,0.5)] sm:text-3xl"
-                animate={{ x: [0, 100, 220, 320], y: [0, -22, 18, -8], rotate: [-12, 12, -8, 8] }}
-                transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                🦋
-              </motion.span>
-              <motion.span
-                className="absolute right-[10%] top-[58%] text-xl drop-shadow-[0_4px_12px_rgba(214,183,122,0.45)] sm:text-2xl"
-                animate={{ x: [0, -90, -190, -270], y: [0, 20, -14, 8], rotate: [10, -12, 8, -6] }}
-                transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
-              >
-                🦋
-              </motion.span>
-              <motion.span
-                className="absolute left-[48%] top-[12%] text-lg opacity-75 sm:text-xl"
-                animate={{ x: [0, 70, 130, 30], y: [0, 24, -12, 0], rotate: [-8, 8, -12, 4] }}
-                transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-              >
-                🦋
-              </motion.span>
-            </div>
-          )}
-          <div className="relative mx-auto max-w-5xl px-4 lg:px-8">
-            <div className="mb-5 flex flex-col items-start justify-between gap-3 sm:mb-6 sm:flex-row sm:items-end sm:gap-4">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#cfe7f6]">Customer love</p>
-                <h2 className="mt-2 max-w-[16ch] font-display text-[clamp(1.65rem,5vw,2.4rem)] leading-tight text-white">Loved by thoughtful people.</h2>
-              </div>
-              <div className="flex gap-3 self-end sm:self-auto">
-                <button type="button" onClick={() => setActiveTestimonial((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1))} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition hover:bg-white/15">
-                  <ChevronLeft size={18} />
-                </button>
-                <button type="button" onClick={() => setActiveTestimonial((prev) => (prev + 1) % testimonials.length)} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition hover:bg-white/15">
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-[22px] border border-white/10 bg-white/10 p-4 backdrop-blur-sm sm:rounded-[26px] sm:p-6 md:p-7">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-1 text-[#D6B77A]">
-                  {[...Array(testimonials[activeTestimonial].rating)].map((_, index) => (
-                    <Star key={index} size={15} fill="currentColor" />
-                  ))}
-                </div>
-                <MessageCircleHeart size={20} className="shrink-0 text-[#87CEEB]" />
-              </div>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-[#edf8ff] sm:mt-4 sm:text-base sm:leading-7">
-                “{testimonials[activeTestimonial].review}”
-              </p>
-              <div className="mt-5 flex items-center justify-between gap-4 border-t border-white/10 pt-4">
-                <div>
-                  <p className="font-display text-lg text-white sm:text-xl">{testimonials[activeTestimonial].name}</p>
-                  <p className="mt-1 text-xs text-[#cfe7f6] sm:text-sm">{testimonials[activeTestimonial].product}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <CustomerReviews prefersReducedMotion={prefersReducedMotion} />
 
         <section className="mx-auto max-w-7xl px-4 py-14 sm:py-20 lg:px-8 lg:py-24">
           <div className="rounded-[28px] bg-[linear-gradient(135deg,#dff3fb,#edf8ff_51%,#fff9f1)] p-5 shadow-[0_30px_90px_rgba(24,59,86,0.08)] sm:rounded-[38px] sm:p-8 md:p-12">

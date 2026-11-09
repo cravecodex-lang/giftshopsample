@@ -192,4 +192,18 @@ export const testimonials = [
     product: 'Wedding Gift Collection',
     rating: 4,
   },
+  {
+    name: 'Priya R.',
+    review:
+      'The personalised frame arrived safely and looked just like the preview. It made a lovely anniversary gift.',
+    product: 'Personalised Photo Frames',
+    rating: 5,
+  },
+  {
+    name: 'Karthik M.',
+    review:
+      'The hamper had a thoughtful mix of treats and the note made it feel personal. Delivery updates were helpful too.',
+    product: 'Luxury Gift Hamper',
+    rating: 5,
+  },
 ];

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import HomePage from './pages/HomePage';
+import WriteReviewPage from './pages/WriteReviewPage';
 import GiftIntro from './components/GiftIntro';
 
 function App() {
@@ -10,7 +11,10 @@ function App() {
     <BrowserRouter>
       <GiftIntro onReveal={setSiteRevealed} />
       <div className={`gift-site${siteRevealed ? ' gift-site--revealed' : ''}`}>
-        <HomePage />
+        <Routes>
+          <Route path="/write-review" element={<WriteReviewPage />} />
+          <Route path="*" element={<HomePage />} />
+        </Routes>
       </div>
     </BrowserRouter>
   );
