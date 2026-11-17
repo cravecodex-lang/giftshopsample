@@ -1,0 +1,15 @@
+.gift-category-carousel-track {
+  scrollbar-width: none;
+  scroll-padding-inline: 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gift-category-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gift-category-carousel-track {
+    scroll-behavior: auto;
+  }
+}

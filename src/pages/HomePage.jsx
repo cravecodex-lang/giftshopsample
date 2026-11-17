@@ -1,9 +1,30 @@
 import { useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
-import { Camera, Heart, Menu, MessageCircle, MessageCircleHeart, Search, ShoppingBag, Star, TrendingUp, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Baby,
+  BriefcaseBusiness,
+  Camera,
+  Check,
+  Eye,
+  Heart,
+  Menu,
+  MessageCircle,
+  MessageCircleHeart,
+  Search,
+  ShoppingBag,
+  Sparkles,
+  Star,
+  TrendingUp,
+  UserRound,
+  Users,
+  X,
+} from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BestSellersCarousel from '../components/BestSellersCarousel';
 import CartDrawer from '../components/CartDrawer';
+import CategoriesPage from './CategoriesPage';
 import CheckoutPage from './CheckoutPage';
 import Logo from '../components/Logo';
 import PersonalizeModal from '../components/PersonalizeModal';
@@ -15,7 +36,7 @@ import { categoryCards, products, testimonials } from '../data/mockData';
 
 const navLinks = [
   { label: 'Home', href: '#home' },
-  { label: 'Categories', href: '#categories' },
+  { label: 'Categories', href: '/categories' },
   { label: 'Shop All', href: '#featured-products' },
   { label: 'Contact Us', href: '#contact' },
 ];
@@ -89,6 +110,85 @@ const budgetRanges = [
   { id: '300-599', label: '₹300 – ₹599', amount: null, min: 300, max: 599 },
 ];
 
+const giftFinderSteps = [
+  {
+    key: 'recipient',
+    shortLabel: 'Who it\'s for',
+    title: 'Who are you shopping for?',
+    options: [
+      { value: 'Partner', label: 'Partner', icon: Heart },
+      { value: 'Mother', label: 'Mother', icon: Baby },
+      { value: 'Father', label: 'Father', icon: UserRound },
+      { value: 'Friend', label: 'Friend', icon: Users },
+      { value: 'Colleague', label: 'Colleague', icon: BriefcaseBusiness },
+      { value: 'Someone Special', label: 'Someone Special', icon: Sparkles },
+    ],
+  },
+  {
+    key: 'occasion',
+    shortLabel: 'Occasion',
+    title: 'What is the occasion?',
+    options: [
+      { value: 'Birthday', label: 'Birthday' },
+      { value: 'Anniversary', label: 'Anniversary' },
+      { value: 'Wedding', label: 'Wedding' },
+      { value: 'Farewell', label: 'Farewell' },
+      { value: 'Valentine\'s Day', label: 'Valentine\'s Day' },
+      { value: 'Just Because', label: 'Just Because' },
+    ],
+  },
+  {
+    key: 'budget',
+    shortLabel: 'Budget',
+    title: 'What is your budget?',
+    options: [
+      { value: 'Under ₹199', label: 'Under ₹199', min: 0, max: 199 },
+      { value: '₹200–₹500', label: '₹200–₹500', min: 200, max: 500 },
+      { value: '₹500–₹1,000', label: '₹500–₹1,000', min: 500, max: 1000 },
+      { value: '₹1,000–₹2,000', label: '₹1,000–₹2,000', min: 1000, max: 2000 },
+      { value: 'Above ₹2,000', label: 'Above ₹2,000', min: 2001, max: 99999 },
+    ],
+  },
+  {
+    key: 'preference',
+    shortLabel: 'Preferences',
+    title: 'What type of gift do you prefer?',
+    options: [
+      { value: 'Personalised', label: 'Personalised' },
+      { value: 'Cute & Adorable', label: 'Cute & Adorable' },
+      { value: 'Luxury & Premium', label: 'Luxury & Premium' },
+      { value: 'Surprise Gift Box', label: 'Surprise Gift Box' },
+      { value: 'Anything Special', label: 'Anything Special' },
+    ],
+  },
+];
+
+const recipientKeywords = {
+  Partner: ['luxury', 'flowers', 'gift hamper', 'chocolate', 'personalised', 'love'],
+  Mother: ['personalised', 'photo', 'frame', 'flower', 'candle', 'teddy', 'soft'],
+  Father: ['luxury', 'hamper', 'gift hamper', 'premium', 'candle', 'personalised'],
+  Friend: ['flowers', 'chocolate', 'gift hamper', 'teddy', 'candle', 'personalised'],
+  Colleague: ['gift hamper', 'chocolate', 'premium', 'candle', 'luxury', 'box'],
+  'Someone Special': ['personalised', 'luxury', 'gift hamper', 'flowers', 'name', 'surprise'],
+};
+
+const occasionKeywords = {
+  Birthday: ['birthday', 'sweet', 'chocolate', 'gift hamper', 'bouquet', 'personalised'],
+  Anniversary: ['anniversary', 'personalised', 'flower', 'hamper', 'luxury', 'photo'],
+  Wedding: ['wedding', 'personalised', 'hampers', 'luxury', 'photo', 'gift'],
+  Farewell: ['farewell', 'gift hamper', 'personalised', 'candle', 'chocolate', 'box'],
+  "Valentine's Day": ['valentine', 'flower', 'love', 'gift hamper', 'chocolate', 'personalised'],
+  'Just Because': ['just', 'gift hamper', 'personalised', 'teddy', 'luxury', 'sweet'],
+};
+
+const preferenceKeywords = {
+  Personalised: ['personalised', 'photo', 'name', 'frame', 'custom'],
+  'Cute & Adorable': ['teddy', 'soft', 'cute', 'bear', 'candle', 'gift'],
+  'Luxury & Premium': ['luxury', 'premium', 'hamper', 'flower', 'gift hamper'],
+  'Surprise Gift Box': ['gift hamper', 'box', 'surprise', 'luxury', 'sweet'],
+  'Anything Special': ['gift', 'personalised', 'luxury', 'premium', 'surprise'],
+};
+
 const collectionProducts = heroCategories.slice(0, 4).map((category, index) => ({
   ...products[index],
   id: `collection-${index}`,
@@ -98,6 +198,522 @@ const collectionProducts = heroCategories.slice(0, 4).map((category, index) => (
 }));
 
 const whatsappNumber = '919788591998';
+
+function PremiumGiftFinder({ products, onAddToBag, onViewProduct }) {
+  const prefersReducedMotion = useReducedMotion();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [answers, setAnswers] = useState({
+    recipient: null,
+    occasion: null,
+    budget: null,
+    preference: null,
+  });
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const currentStepConfig = giftFinderSteps[currentStep];
+  const currentSelection = answers[currentStepConfig.key];
+
+  const recommendedProducts = useMemo(() => {
+    if (!isSubmitted) return [];
+
+    const { recipient, occasion, budget, preference } = answers;
+    if (!recipient || !occasion || !budget || !preference) return [];
+
+    const budgetOption = giftFinderSteps[2].options.find((option) => option.value === budget);
+    const budgetMin = budgetOption?.min ?? 0;
+    const budgetMax = budgetOption?.max ?? 99999;
+
+    const normalizedProducts = products.filter((product) => {
+      const haystack = `${product.name} ${product.category}`.toLowerCase();
+      const selectedRecipientMatches = recipientKeywords[recipient]?.some((key) => haystack.includes(key));
+      const selectedOccasionMatches = occasionKeywords[occasion]?.some((key) => haystack.includes(key));
+      const selectedPreferenceMatches = preferenceKeywords[preference]?.some((key) => haystack.includes(key));
+      const budgetMatches = product.price >= budgetMin && product.price <= budgetMax;
+      return [selectedRecipientMatches, selectedOccasionMatches, budgetMatches, selectedPreferenceMatches].filter(Boolean).length >= 2;
+    });
+
+    if (normalizedProducts.length) return normalizedProducts;
+
+    return products.filter((product) => {
+      const haystack = `${product.name} ${product.category}`.toLowerCase();
+      const recipientMatch = recipientKeywords[recipient]?.some((key) => haystack.includes(key));
+      const occasionMatch = occasionKeywords[occasion]?.some((key) => haystack.includes(key));
+      const preferenceMatch = preferenceKeywords[preference]?.some((key) => haystack.includes(key));
+      const budgetMatch = product.price >= budgetMin && product.price <= budgetMax;
+      return [recipientMatch, occasionMatch, budgetMatch, preferenceMatch].filter(Boolean).length >= 1;
+    });
+  }, [answers, isSubmitted, products]);
+
+  const handleSelection = (value) => {
+    setAnswers((current) => ({
+      ...current,
+      [currentStepConfig.key]: value,
+    }));
+  };
+
+  const handleNext = () => {
+    if (!currentSelection) return;
+    if (currentStep < giftFinderSteps.length - 1) {
+      setCurrentStep((step) => step + 1);
+      return;
+    }
+    setIsSubmitted(true);
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep((step) => step - 1);
+    }
+  };
+
+  const resetFinder = () => {
+    setCurrentStep(0);
+    setAnswers({ recipient: null, occasion: null, budget: null, preference: null });
+    setIsSubmitted(false);
+  };
+
+  const currentStepIndex = currentStep + 1;
+  const stepOptions = currentStepConfig.options;
+  const isFinalStep = currentStep === giftFinderSteps.length - 1;
+
+  return (
+    <section className="relative mx-auto mt-6 w-full max-w-[1400px] px-3 sm:px-4 lg:px-6">
+      <style>{`
+        .gift-finder-shell {
+          background: linear-gradient(135deg, #edf7ff 0%, #dfeefc 25%, #e7f3ff 100%);
+          border: 1px solid rgba(21, 59, 96, 0.08);
+          box-shadow: 0 28px 80px rgba(21, 59, 96, 0.09);
+        }
+        .gift-finder-visual {
+          position: relative;
+          background: linear-gradient(180deg, #c2e2ff 0%, #b7dff8 100%);
+          overflow: hidden;
+          border-radius: 32px 0 0 32px;
+        }
+        .gift-finder-visual::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 60% 15%, rgba(255,255,255,0.6), rgba(255,255,255,0) 32%);
+        }
+        .gift-finder-ribbon {
+          position: absolute;
+          width: 220px;
+          height: 26px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, rgba(255,255,255,0.85) 0%, rgba(122,193,255,0.9) 30%, rgba(76,144,214,0.9) 100%);
+          box-shadow: 0 12px 30px rgba(36, 90, 156, 0.18);
+          transform-origin: center;
+        }
+        .gift-finder-ribbon--one {
+          left: 8%;
+          top: 12%;
+          transform: rotate(25deg) skewX(18deg);
+        }
+        .gift-finder-ribbon--two {
+          right: 10%;
+          top: 24%;
+          transform: rotate(-22deg) skewX(-18deg);
+        }
+        .gift-finder-ribbon--three {
+          left: 20%;
+          bottom: 18%;
+          transform: rotate(-27deg) skewX(-20deg);
+        }
+        .gift-finder-box {
+          position: absolute;
+          left: 50%;
+          bottom: 88px;
+          transform: translateX(-50%);
+          width: min(69%, 460px);
+          aspect-ratio: 1.35;
+          border-radius: 18px 18px 12px 12px;
+          background: linear-gradient(132deg, rgba(183,223,248,0.96) 0%, rgba(118,177,232,0.95) 42%, rgba(70,131,201,0.96) 100%);
+          border: 2px solid rgba(255,255,255,0.76);
+          box-shadow: 0 26px 40px rgba(30, 82, 143, 0.18), inset -10px -7px 26px rgba(28,91,164,0.28), inset 12px 8px 18px rgba(255,255,255,0.12);
+        }
+        .gift-finder-box::before,
+        .gift-finder-box::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+        }
+        .gift-finder-box::before {
+          background: linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 35%, rgba(255,255,255,0.12) 100%);
+          clip-path: polygon(0 0, 100% 0, 100% 22%, 0 22%);
+        }
+        .gift-finder-box::after {
+          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.32) 45%, rgba(255,255,255,0) 100%);
+          clip-path: polygon(0 22%, 100% 22%, 100% 28%, 0 28%);
+          opacity: 0.7;
+        }
+        .gift-finder-lid {
+          position: absolute;
+          left: 50%;
+          bottom: 166px;
+          transform: translateX(-50%) rotate(-6deg);
+          width: min(72%, 500px);
+          height: 84px;
+          border-radius: 18px 18px 12px 12px;
+          background: linear-gradient(120deg, rgba(184, 222, 249, 0.96) 0%, rgba(138,185,232,0.96) 28%, rgba(72,130,196,0.96) 100%);
+          border: 2px solid rgba(255,255,255,0.7);
+          box-shadow: inset -8px -8px 16px rgba(31, 93, 166, 0.2), 0 14px 24px rgba(30, 82, 143, 0.12);
+        }
+        .gift-finder-lid::before {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: -26px;
+          width: 18px;
+          height: 72px;
+          transform: translateX(-50%);
+          border-radius: 999px;
+          background: linear-gradient(180deg, #f4d583 0%, #d7b16c 40%, #af8d54 100%);
+          box-shadow: 0 0 0 4px rgba(255,255,255,0.18);
+        }
+        .gift-finder-lid::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: -18px;
+          width: 80%;
+          height: 18px;
+          transform: translateX(-50%);
+          border-radius: 999px;
+          background: linear-gradient(90deg, rgba(255,255,255,0.86), rgba(255,255,255,0.3), rgba(255,255,255,0.86));
+          opacity: 0.75;
+        }
+        .gift-finder-ribbon-band {
+          position: absolute;
+          left: 50%;
+          top: 0;
+          width: 16px;
+          height: 100%;
+          transform: translateX(-50%);
+          border-radius: 999px;
+          background: linear-gradient(180deg, #f5d887 0%, #d1aa63 45%, #b68736 100%);
+          box-shadow: 0 0 0 6px rgba(255,255,255,0.18);
+        }
+        .gift-finder-ribbon-band::before,
+        .gift-finder-ribbon-band::after {
+          content: '';
+          position: absolute;
+          top: 12px;
+          width: 132px;
+          height: 18px;
+          background: linear-gradient(90deg, rgba(190,227,255,0.9), rgba(119,181,234,0.9));
+          border-radius: 999px;
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+        }
+        .gift-finder-ribbon-band::before {
+          left: -112px;
+          transform: rotate(28deg);
+        }
+        .gift-finder-ribbon-band::after {
+          right: -112px;
+          transform: rotate(-28deg);
+        }
+        .gift-finder-standing {
+          position: absolute;
+          left: 50%;
+          bottom: 50px;
+          transform: translateX(-50%);
+          width: min(72%, 420px);
+          height: 94px;
+          border-radius: 26px 26px 36px 36px;
+          background: linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0.04));
+          border: 1px solid rgba(255,255,255,0.24);
+          box-shadow: inset 0 14px 20px rgba(255,255,255,0.14), 0 10px 24px rgba(39,81,122,0.08);
+        }
+        .gift-finder-shimmer {
+          position: absolute;
+          left: 50%;
+          bottom: 188px;
+          transform: translateX(-50%);
+          width: min(62%, 300px);
+          height: 110px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 30%, rgba(255,255,255,0) 70%);
+          filter: blur(8px);
+          opacity: 0.8;
+        }
+        .gift-finder-badge {
+          position: absolute;
+          bottom: 10px;
+          left: 25px;
+          display: grid;
+          gap: 6px;
+          padding: 8px 10px;
+          border-radius: 14px;
+          background: rgba(255,255,255,0.22);
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+          backdrop-filter: blur(10px);
+        }
+        .gift-finder-mini-box {
+          position: absolute;
+          width: clamp(52px, 8vw, 88px);
+          aspect-ratio: 1;
+          border-radius: 12px;
+          background: linear-gradient(135deg, #e7f4ff 0%, #c0dffb 45%, #a9d2f4 100%);
+          border: 2px solid rgba(255,255,255,0.8);
+          box-shadow: 0 16px 28px rgba(30, 82, 143, 0.16);
+        }
+        .gift-finder-mini-box::before {
+          content: '';
+          position: absolute;
+          inset: 18% 18%;
+          border-radius: 8px;
+          background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,255,255,0.2), rgba(255,255,255,0.9));
+          opacity: 0.7;
+        }
+        .gift-finder-mini-box::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 0;
+          width: 12px;
+          height: 100%;
+          transform: translateX(-50%);
+          border-radius: 999px;
+          background: linear-gradient(180deg, #f2d27a 0%, #d4ad5c 100%);
+        }
+        .gift-finder-mini-box .gift-finder-mini-box__lid {
+          position: absolute;
+          left: 50%;
+          top: -10px;
+          transform: translateX(-50%);
+          width: 110%;
+          height: 12px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #f2d27a 0%, #d2a95d 100%);
+        }
+        .gift-finder-mini-box .gift-finder-mini-box__lid::before,
+        .gift-finder-mini-box .gift-finder-mini-box__lid::after {
+          content: '';
+          position: absolute;
+          top: 8px;
+          width: 54%;
+          height: 10px;
+          border-radius: 999px;
+          background: rgba(110, 175, 244, 0.9);
+        }
+        .gift-finder-mini-box .gift-finder-mini-box__lid::before { left: -12%; transform: rotate(32deg); }
+        .gift-finder-mini-box .gift-finder-mini-box__lid::after { right: -12%; transform: rotate(-32deg); }
+        .gift-finder-card {
+          background: rgba(255,255,255,0.6);
+          border: 1px solid rgba(21,59,96,0.08);
+          backdrop-filter: blur(18px);
+        }
+        .gift-finder-option {
+          transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+        }
+        .gift-finder-option:hover {
+          transform: translateY(-1px);
+        }
+        .gift-finder-option--selected {
+          border-color: rgba(116, 170, 233, 0.95) !important;
+          background: rgba(196, 225, 249, 0.38);
+          box-shadow: 0 18px 32px rgba(68, 116, 173, 0.12);
+        }
+        @media (max-width: 1023px) {
+          .gift-finder-visual {
+            border-radius: 32px 32px 0 0;
+          }
+        }
+      `}</style>
+
+      <h2 className="mb-5 text-center font-display text-3xl font-semibold text-[#153b60] sm:text-4xl">
+        Find a Perfect Gift
+      </h2>
+      <div className="gift-finder-shell relative overflow-hidden rounded-[34px] bg-[#edf8ff]">
+        <div className="grid gap-0 lg:grid-cols-2">
+          <div className="gift-finder-visual relative min-h-[220px] overflow-hidden p-0 sm:min-h-[320px] lg:min-h-[500px]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.72),_rgba(255,255,255,0)_54%)]" aria-hidden="true" />
+            <img
+              src="/gift-finder-scene.png"
+              alt="Premium gift box illustration"
+              className="h-full w-full object-cover object-center"
+            />
+          </div>
+
+          <div className="gift-finder-card relative flex min-h-[380px] items-center justify-center p-3 sm:min-h-[500px] sm:p-6 lg:p-8">
+            <div className="w-full max-w-[610px] rounded-[28px] border border-[#dfeaf7] bg-white/70 p-4 shadow-[0_20px_60px_rgba(21,59,96,0.08)] backdrop-blur-md sm:p-6 lg:p-7">
+              <div className="mb-6 flex items-center justify-between gap-3">
+                <div className="flex w-full items-center justify-between gap-2">
+                  {[...Array(giftFinderSteps.length)].map((_, index) => {
+                    const isActive = currentStep === index;
+                    const isComplete = index < currentStep || (isSubmitted && index === giftFinderSteps.length - 1);
+                    return (
+                      <div key={`step-${index}`} className="flex flex-1 items-center justify-center">
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold ${isActive || isComplete ? 'border-[#87bce7] bg-[#eaf6ff] text-[#153b60]' : 'border-[#d9e7f5] bg-[#f4f8fb] text-[#7d8fa5]'}`}>
+                          {isComplete ? <Check size={16} /> : index + 1}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mb-6 grid grid-cols-4 gap-1 text-center text-[9px] font-medium leading-tight text-[#6a7c8b] sm:gap-2 sm:text-xs">
+                {giftFinderSteps.map((step, index) => (
+                  <div key={step.key} className={`rounded-full px-2 py-1.5 ${currentStep === index ? 'bg-[#edf7ff] text-[#153b60]' : 'bg-transparent'}`}>
+                    {step.shortLabel}
+                  </div>
+                ))}
+              </div>
+
+              {!isSubmitted ? (
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentStepConfig.key}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.26, ease: 'easeOut' }}
+                    className="space-y-5"
+                  >
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8aa8c5]">
+                      Step {currentStepIndex} of {giftFinderSteps.length}
+                    </div>
+                    <h3 className="max-w-[14ch] font-display text-3xl leading-[1.02] text-[#153b60] sm:text-[2.6rem]">
+                      {currentStepConfig.title}
+                    </h3>
+
+                    <div className="mb-1 flex items-center gap-2 text-sm text-[#4f6478]">
+                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-[#87bce7] bg-[#edf6ff] text-[#153b60]">
+                        ✓
+                      </span>
+                      <span>This helps us find the perfect match</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {stepOptions.map((option) => {
+                        const selected = currentSelection === option.value;
+                        const Icon = option.icon;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => handleSelection(option.value)}
+                            className={`gift-finder-option relative flex min-h-[82px] flex-col items-center justify-center rounded-[22px] border p-4 text-center ${selected ? 'gift-finder-option--selected border-[#87bce7] bg-[#edf7ff]' : 'border-[#dfeaf7] bg-[#ffffff]'}`}
+                          >
+                            {selected ? (
+                              <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-[#153b60] text-white shadow-sm">
+                                <Check size={14} />
+                              </span>
+                            ) : null}
+                            {Icon ? (
+                              <div className={`mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border ${selected ? 'border-[#87bce7] bg-[#dfeeff] text-[#153b60]' : 'border-[#dfeaf7] bg-[#f5faff] text-[#153b60]'}`}>
+                                <Icon size={24} />
+                              </div>
+                            ) : null}
+                            <span className={`font-medium ${selected ? 'text-[#153b60]' : 'text-[#183b56]'}`}>
+                              {option.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-2">
+                      {currentStep > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleBack}
+                          className="inline-flex items-center gap-2 rounded-full border border-[#dfeaf7] bg-[#f9fbff] px-4 py-3 text-sm font-semibold text-[#183b56] transition hover:bg-[#eef7ff]"
+                        >
+                          <ArrowLeft size={15} />
+                          Back
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleNext}
+                        disabled={!currentSelection}
+                        className="ml-auto inline-flex w-full max-w-[210px] items-center justify-center gap-2 rounded-full bg-[#153b60] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(21,59,96,0.18)] transition hover:bg-[#0f2d49] disabled:cursor-not-allowed disabled:opacity-45"
+                      >
+                        {isFinalStep ? 'Find My Perfect Gift' : 'Continue'}
+                        <ArrowRight size={16} />
+                      </button>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8aa8c5]">Your picks</p>
+                      <h3 className="mt-2 font-display text-3xl leading-tight text-[#153b60]">Gift Match</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={resetFinder}
+                      className="rounded-full border border-[#dfeaf7] bg-[#f7fbff] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#153b60] transition hover:bg-[#edf6ff]"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  <div className="rounded-[22px] border border-[#dfeaf7] bg-[#f7fbff] p-3 text-sm text-[#49637d]">
+                    {answers.recipient} · {answers.occasion} · {answers.budget} · {answers.preference}
+                  </div>
+
+                  {recommendedProducts.length ? (
+                    <div className="grid max-h-[min(64vh,640px)] gap-2 overflow-y-auto overscroll-contain pr-2 sm:max-h-[min(76vh,800px)] sm:grid-cols-2 sm:gap-3">
+                      {recommendedProducts.map((product) => (
+                        <article key={product.id} className="overflow-hidden rounded-[22px] border border-[#dfeaf7] bg-white shadow-[0_12px_32px_rgba(21,59,96,0.05)]">
+                          <img src={product.image} alt={product.name} className="h-24 w-full object-cover sm:h-32" />
+                          <div className="space-y-2 p-3 sm:space-y-3 sm:p-3.5">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7b8ea2]">{product.category}</div>
+                            <h4 className="line-clamp-2 text-base font-semibold text-[#153b60]">{product.name}</h4>
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-base font-semibold text-[#153b60]">₹{product.price.toLocaleString('en-IN')}</span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => onViewProduct(product)}
+                                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#dfeaf7] bg-[#f7fbff] text-[#153b60] transition hover:bg-[#edf6ff]"
+                                  aria-label={`View ${product.name}`}
+                                  title="View product"
+                                >
+                                  <Eye size={16} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onAddToBag(product)}
+                                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#153b60] text-white shadow-sm transition hover:scale-105 hover:bg-[#0f2d49] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#87ceeb]"
+                                  aria-label={`Add ${product.name} to bag`}
+                                  title="Add to bag"
+                                >
+                                  <ShoppingBag size={17} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-[22px] border border-dashed border-[#cfe0f0] bg-[#f9fbff] p-6 text-center text-sm leading-6 text-[#49637d]">
+                      No exact matches were found for this combination yet. Try a different budget or preferred style to uncover more gift ideas.
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function CustomerReviews({ prefersReducedMotion }) {
   const sectionRef = useRef(null);
@@ -347,6 +963,33 @@ function HomePage() {
     return <CheckoutPage items={cartItems} onOrderPlaced={() => setCartItems([])} />;
   }
 
+  if (location.pathname === '/categories') {
+    return (
+      <CategoriesPage
+        products={products}
+        cartItems={cartItems}
+        cartCount={cartCount}
+        wishlistIds={wishlistIds}
+        wishlistProducts={wishlistProducts}
+        cartOpen={cartOpen}
+        wishlistOpen={wishlistOpen}
+        onSetCartOpen={setCartOpen}
+        onSetWishlistOpen={setWishlistOpen}
+        onToggleWishlist={toggleWishlist}
+        onAddToBag={handleAddToBag}
+        onUpdateQuantity={handleUpdateQuantity}
+        onRemoveItem={handleRemoveItem}
+        onCheckout={() => {
+          setCartOpen(false);
+          navigate('/checkout');
+        }}
+        onViewProduct={setSelectedProduct}
+        selectedProduct={selectedProduct}
+        onCloseProduct={() => setSelectedProduct(null)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FFFCF7] text-[#243746]">
       <header className="fixed inset-x-0 top-0 z-40 bg-[#183B56] shadow-[0_10px_35px_rgba(10,35,55,0.18)]">
@@ -369,12 +1012,17 @@ function HomePage() {
           </Link>
 
           <div className="hidden items-center gap-8 lg:flex">
-            {navLinks.map((link) => (
-              <a key={link.label} href={link.href} className="group relative text-sm font-medium tracking-[0.02em] text-white transition hover:text-[#87CEEB]">
-                <span>{link.label}</span>
-                <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-[#87CEEB] transition-transform duration-300 group-hover:scale-x-100" />
-              </a>
-            ))}
+            {navLinks.map((link) => {
+              const isRoute = link.href.startsWith('/');
+              const LinkComponent = isRoute ? Link : 'a';
+              const linkProps = isRoute ? { to: link.href } : { href: link.href };
+              return (
+                <LinkComponent key={link.label} {...linkProps} className="group relative text-sm font-medium tracking-[0.02em] text-white transition hover:text-[#87CEEB]">
+                  <span>{link.label}</span>
+                  <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-[#87CEEB] transition-transform duration-300 group-hover:scale-x-100" />
+                </LinkComponent>
+              );
+            })}
           </div>
 
           <div className="hidden items-center gap-3 lg:flex">
@@ -402,11 +1050,16 @@ function HomePage() {
           {menuOpen ? (
             <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="border-t border-white/15 bg-[#183B56] px-4 py-5 lg:hidden">
               <div className="space-y-4">
-                {navLinks.map((link) => (
-                  <a key={link.label} href={link.href} onClick={() => setMenuOpen(false)} className="block text-base font-medium text-white">
-                    {link.label}
-                  </a>
-                ))}
+                {navLinks.map((link) => {
+                  const isRoute = link.href.startsWith('/');
+                  const LinkComponent = isRoute ? Link : 'a';
+                  const linkProps = isRoute ? { to: link.href } : { href: link.href };
+                  return (
+                    <LinkComponent key={link.label} {...linkProps} onClick={() => setMenuOpen(false)} className="block text-base font-medium text-white">
+                      {link.label}
+                    </LinkComponent>
+                  );
+                })}
                 <div className="flex items-center gap-3 pt-2">
                   <button type="button" onClick={() => setSearchOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-[#183B56]">
                     <Search size={18} />
@@ -541,6 +1194,11 @@ function HomePage() {
               onToggleWishlist={toggleWishlist}
               onAddToBag={handleAddToBag}
               onProductClick={setSelectedProduct}
+            />
+            <PremiumGiftFinder
+              products={products}
+              onAddToBag={handleAddToBag}
+              onViewProduct={setSelectedProduct}
             />
             <div className="mx-auto mt-8 grid max-w-6xl grid-cols-1 gap-4 sm:mt-10 lg:grid-cols-2 lg:gap-6">
               {[
