@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
 import {
   ArrowLeft,
   ArrowRight,
@@ -32,7 +32,8 @@ import ProductCatalogue from '../components/ProductCatalogue';
 import QuickViewModal from '../components/QuickViewModal';
 import SearchOverlay from '../components/SearchOverlay';
 import WishlistDrawer from '../components/WishlistDrawer';
-import { categoryCards, products, testimonials } from '../data/mockData';
+import { products, testimonials } from '../data/mockData';
+import { categoryProductIds, giftCategories } from '../data/giftCategories';
 
 const navLinks = [
   { label: 'Home', href: '#home' },
@@ -96,12 +97,12 @@ const giftDetailVariants = {
 };
 
 const heroCategories = [
-  { value: 'Personalised', label: 'Photo Album Keychains', image: '/Romantic%20Mini%20Photo%20Album%20Keychain.png' },
-  { value: 'Personalised', label: 'Heart Lockets', image: '/Silver%20Heart%20Locket%20on%20Green%20Grass.png' },
-  { value: 'Home', label: 'Moon Lamps', image: '/Romantic%20Crescent%20Moon%20LED%20Lamp.png' },
-  { value: 'Personalised', label: 'Photo Mugs', image: '/Personalized%20Portrait%20Photo%20Mug.png' },
-  { value: 'Personalised', label: 'Baby Keepsakes', image: '/Personalized%20Crystal%20Baby%20Keepsake%20Lamp.png' },
-  { value: 'Occasions', label: 'Wedding Plaques', image: '/Golden%20Happy%20Married%20Life%20Plaque.png' },
+  { id: 'photo-album-keychains', title: 'Photo Album Keychains', subtitle: 'Keep favourite moments close.', image: '/Romantic%20Mini%20Photo%20Album%20Keychain.png', productIds: ['photo-frame', 'name-gift'] },
+  { id: 'heart-lockets', title: 'Heart Lockets', subtitle: 'A keepsake made with love.', image: '/Silver%20Heart%20Locket%20on%20Green%20Grass.png', productIds: ['name-gift', 'photo-frame'] },
+  { id: 'moon-lamps', title: 'Moon Lamps', subtitle: 'A little glow for their space.', image: '/Romantic%20Crescent%20Moon%20LED%20Lamp.png', productIds: ['candle-set'] },
+  { id: 'photo-mugs', title: 'Photo Mugs', subtitle: 'Make every sip personal.', image: '/Personalized%20Portrait%20Photo%20Mug.png', productIds: ['photo-frame', 'name-gift'] },
+  { id: 'baby-keepsakes', title: 'Baby Keepsakes', subtitle: 'Celebrate their tiniest moments.', image: '/Personalized%20Crystal%20Baby%20Keepsake%20Lamp.png', productIds: ['photo-frame', 'name-gift'] },
+  { id: 'wedding-plaques', title: 'Wedding Plaques', subtitle: 'A lasting keepsake for forever.', image: '/Golden%20Happy%20Married%20Life%20Plaque.png', productIds: ['birthday-box', 'name-gift'] },
 ];
 
 const budgetRanges = [
@@ -192,8 +193,8 @@ const preferenceKeywords = {
 const collectionProducts = heroCategories.slice(0, 4).map((category, index) => ({
   ...products[index],
   id: `collection-${index}`,
-  name: category.label,
-  category: category.value,
+  name: category.title,
+  category: category.title,
   image: category.image,
 }));
 
@@ -217,31 +218,20 @@ function PremiumGiftFinder({ products, onAddToBag, onViewProduct }) {
     if (!isSubmitted) return [];
 
     const { recipient, occasion, budget, preference } = answers;
-    if (!recipient || !occasion || !budget || !preference) return [];
+    const criteria = [];
+    if (recipient) criteria.push((product) => recipientKeywords[recipient]?.some((key) => `${product.name} ${product.category}`.toLowerCase().includes(key)));
+    if (occasion) criteria.push((product) => occasionKeywords[occasion]?.some((key) => `${product.name} ${product.category}`.toLowerCase().includes(key)));
+    if (preference) criteria.push((product) => preferenceKeywords[preference]?.some((key) => `${product.name} ${product.category}`.toLowerCase().includes(key)));
+    const budgetOption = budget ? giftFinderSteps[2].options.find((option) => option.value === budget) : null;
+    if (budgetOption) criteria.push((product) => product.price >= budgetOption.min && product.price <= budgetOption.max);
+    if (!criteria.length) return products;
 
-    const budgetOption = giftFinderSteps[2].options.find((option) => option.value === budget);
-    const budgetMin = budgetOption?.min ?? 0;
-    const budgetMax = budgetOption?.max ?? 99999;
-
-    const normalizedProducts = products.filter((product) => {
-      const haystack = `${product.name} ${product.category}`.toLowerCase();
-      const selectedRecipientMatches = recipientKeywords[recipient]?.some((key) => haystack.includes(key));
-      const selectedOccasionMatches = occasionKeywords[occasion]?.some((key) => haystack.includes(key));
-      const selectedPreferenceMatches = preferenceKeywords[preference]?.some((key) => haystack.includes(key));
-      const budgetMatches = product.price >= budgetMin && product.price <= budgetMax;
-      return [selectedRecipientMatches, selectedOccasionMatches, budgetMatches, selectedPreferenceMatches].filter(Boolean).length >= 2;
-    });
+    const score = (product) => criteria.filter((matches) => matches(product)).length;
+    const normalizedProducts = products.filter((product) => score(product) >= Math.min(2, criteria.length));
 
     if (normalizedProducts.length) return normalizedProducts;
 
-    return products.filter((product) => {
-      const haystack = `${product.name} ${product.category}`.toLowerCase();
-      const recipientMatch = recipientKeywords[recipient]?.some((key) => haystack.includes(key));
-      const occasionMatch = occasionKeywords[occasion]?.some((key) => haystack.includes(key));
-      const preferenceMatch = preferenceKeywords[preference]?.some((key) => haystack.includes(key));
-      const budgetMatch = product.price >= budgetMin && product.price <= budgetMax;
-      return [recipientMatch, occasionMatch, budgetMatch, preferenceMatch].filter(Boolean).length >= 1;
-    });
+    return products.filter((product) => score(product) >= 1);
   }, [answers, isSubmitted, products]);
 
   const handleSelection = (value) => {
@@ -252,7 +242,6 @@ function PremiumGiftFinder({ products, onAddToBag, onViewProduct }) {
   };
 
   const handleNext = () => {
-    if (!currentSelection) return;
     if (currentStep < giftFinderSteps.length - 1) {
       setCurrentStep((step) => step + 1);
       return;
@@ -631,8 +620,7 @@ function PremiumGiftFinder({ products, onAddToBag, onViewProduct }) {
                       <button
                         type="button"
                         onClick={handleNext}
-                        disabled={!currentSelection}
-                        className="ml-auto inline-flex w-full max-w-[210px] items-center justify-center gap-2 rounded-full bg-[#153b60] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(21,59,96,0.18)] transition hover:bg-[#0f2d49] disabled:cursor-not-allowed disabled:opacity-45"
+                        className="ml-auto inline-flex w-full max-w-[210px] items-center justify-center gap-2 rounded-full bg-[#153b60] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(21,59,96,0.18)] transition hover:bg-[#0f2d49]"
                       >
                         {isFinalStep ? 'Find My Perfect Gift' : 'Continue'}
                         <ArrowRight size={16} />
@@ -662,7 +650,7 @@ function PremiumGiftFinder({ products, onAddToBag, onViewProduct }) {
                   </div>
 
                   <div className="rounded-[22px] border border-[#dfeaf7] bg-[#f7fbff] p-3 text-sm text-[#49637d]">
-                    {answers.recipient} · {answers.occasion} · {answers.budget} · {answers.preference}
+                    {answers.recipient || 'Skipped'} · {answers.occasion || 'Skipped'} · {answers.budget || 'Skipped'} · {answers.preference || 'Skipped'}
                   </div>
 
                   {recommendedProducts.length ? (
@@ -715,58 +703,220 @@ function PremiumGiftFinder({ products, onAddToBag, onViewProduct }) {
   );
 }
 
-function CustomerReviews({ prefersReducedMotion }) {
-  const sectionRef = useRef(null);
+function ShopByBudget({ selectedBudgetRange, onSelectBudget }) {
+  return (
+    <div className="mx-auto mt-12 max-w-4xl sm:mt-16">
+      <div className="text-center">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#A9874D]">A lovely gift for every budget</p>
+        <h3 className="mt-2 font-display text-2xl text-[#183B56] sm:text-3xl">Shop by Budget</h3>
+      </div>
+      <div className="mt-6 grid grid-cols-3 gap-2 sm:mt-8 sm:gap-6">
+        {budgetRanges.map((range) => {
+          const isSelected = selectedBudgetRange?.id === range.id;
+
+          return (
+            <button
+              key={range.id}
+              type="button"
+              aria-pressed={isSelected}
+              aria-label={range.amount ? `Show gifts under ₹${range.amount}` : `Show gifts from ₹${range.min} to ₹${range.max}`}
+              onClick={() => onSelectBudget(range)}
+              className="group flex flex-col items-center text-center"
+            >
+              <span className={`flex aspect-square w-full max-w-[174px] flex-col items-center justify-center rounded-full border-[5px] border-white bg-gradient-to-br from-[#183B56] via-[#21658A] to-[#87CEEB] px-2 text-white shadow-[0_14px_34px_rgba(24,59,86,0.2)] ring-1 ring-[#87CEEB]/40 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_20px_40px_rgba(24,59,86,0.28)] group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#D6B77A] sm:border-[7px] ${isSelected ? 'scale-105 ring-4 ring-[#D6B77A]' : ''}`}>
+                <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#DDF5FF] sm:text-xs">
+                  {range.amount ? 'Under' : 'Budget'}
+                </span>
+                <span className="mt-1 font-display text-[clamp(1.05rem,3.8vw,2rem)] leading-tight">
+                  {range.amount ? `₹${range.amount}` : `₹${range.min}–${range.max}`}
+                </span>
+              </span>
+              <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#183B56] sm:mt-3 sm:text-xs">
+                {range.amount ? 'And under' : 'Gift range'}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function FeaturedCategoriesCarousel({ categories, selectedCategory, onSelectCategory, prefersReducedMotion }) {
+  const viewportRef = useRef(null);
+  const firstGroupRef = useRef(null);
+  const dragRef = useRef(null);
+  const draggedClickRef = useRef(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (prefersReducedMotion || isPaused) return undefined;
+
+    let frameId;
+    let previousTime = 0;
+    const scrollFrame = (time) => {
+      const viewport = viewportRef.current;
+      const cycleWidth = firstGroupRef.current?.scrollWidth ?? 0;
+      if (viewport && cycleWidth) {
+        const elapsed = previousTime ? Math.min(time - previousTime, 50) : 0;
+        viewport.scrollLeft += elapsed * 0.028;
+        if (viewport.scrollLeft >= cycleWidth) viewport.scrollLeft -= cycleWidth;
+      }
+      previousTime = time;
+      frameId = window.requestAnimationFrame(scrollFrame);
+    };
+
+    frameId = window.requestAnimationFrame(scrollFrame);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [isPaused, prefersReducedMotion]);
+
+  const scrollByCategory = (direction) => {
+    const viewport = viewportRef.current;
+    const firstCard = firstGroupRef.current?.firstElementChild;
+    const cycleWidth = firstGroupRef.current?.scrollWidth ?? 0;
+    if (!viewport || !firstCard || !cycleWidth) return;
+
+    if (direction < 0 && viewport.scrollLeft <= 1) viewport.scrollLeft = cycleWidth;
+    if (direction > 0 && viewport.scrollLeft + viewport.clientWidth >= viewport.scrollWidth - 1) {
+      viewport.scrollLeft -= cycleWidth;
+    }
+
+    const gap = Number.parseFloat(window.getComputedStyle(firstGroupRef.current).columnGap) || 18;
+    viewport.scrollBy({
+      left: direction * (firstCard.getBoundingClientRect().width + gap),
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+    });
+  };
+
+  const handlePointerDown = (event) => {
+    if (event.pointerType === 'touch' || event.button !== 0) return;
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startScrollLeft: viewportRef.current.scrollLeft,
+      moved: false,
+      captured: false,
+    };
+  };
+
+  const handlePointerMove = (event) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const distance = event.clientX - drag.startX;
+    if (Math.abs(distance) > 5) drag.moved = true;
+    if (drag.moved) {
+      if (!drag.captured) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+        drag.captured = true;
+      }
+      viewportRef.current.scrollLeft = drag.startScrollLeft - distance;
+      event.preventDefault();
+    }
+  };
+
+  const handlePointerUp = (event) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    if (drag.moved) {
+      draggedClickRef.current = true;
+      window.setTimeout(() => { draggedClickRef.current = false; }, 0);
+    }
+    if (!event.currentTarget.matches(':hover') && !event.currentTarget.contains(document.activeElement)) {
+      setIsPaused(false);
+    }
+  };
+
+  return (
+    <div
+      className="mx-auto max-w-[1700px] px-3 lg:px-8"
+      onPointerEnter={() => setIsPaused(true)}
+      onPointerLeave={() => {
+        if (!dragRef.current && !viewportRef.current?.contains(document.activeElement)) setIsPaused(false);
+      }}
+      onFocusCapture={() => setIsPaused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget) && !event.currentTarget.matches(':hover')) {
+          setIsPaused(false);
+        }
+      }}
+      onClickCapture={(event) => {
+        if (draggedClickRef.current) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }}
+    >
+      <div
+        ref={viewportRef}
+        className="category-marquee category-marquee--static cursor-grab select-none active:cursor-grabbing"
+        aria-label="Featured gift categories. Drag or swipe to browse."
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+            event.preventDefault();
+            scrollByCategory(event.key === 'ArrowLeft' ? -1 : 1);
+          }
+        }}
+      >
+        <div className="category-marquee__track category-marquee__track--static">
+          {[0, 1].map((groupIndex) => (
+            <div
+              key={groupIndex}
+              ref={groupIndex === 0 ? firstGroupRef : undefined}
+              className="category-marquee__group"
+              aria-hidden={groupIndex === 1 ? 'true' : undefined}
+            >
+              {categories.map((category) => (
+                groupIndex === 0 ? (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => onSelectCategory(category.id)}
+                    aria-pressed={selectedCategory === category.id}
+                    className={`group min-w-[118px] shrink-0 text-center transition sm:min-w-[200px] ${selectedCategory === category.id ? 'opacity-100' : 'opacity-95'}`}
+                  >
+                    <span className={`mx-auto mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-[#eef5f8] shadow-[0_10px_24px_rgba(24,59,86,0.14)] transition group-hover:scale-[1.02] sm:mb-3 sm:h-36 sm:w-36 sm:border-[4px] ${selectedCategory === category.id ? 'ring-4 ring-[#183B56]/10' : ''}`}>
+                      <img src={category.image} alt="" className="h-auto w-[84%] object-contain" />
+                    </span>
+                    <span className="block text-center text-[12px] font-medium leading-tight text-[#183B56] sm:text-[14px]">
+                      {category.title}
+                    </span>
+                  </button>
+                ) : (
+                  <div key={category.id} className="min-w-[118px] shrink-0 text-center opacity-95 sm:min-w-[200px]">
+                    <span className="mx-auto mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-[#eef5f8] shadow-[0_10px_24px_rgba(24,59,86,0.14)] sm:mb-3 sm:h-36 sm:w-36 sm:border-[4px]">
+                      <img src={category.image} alt="" className="h-auto w-[84%] object-contain" />
+                    </span>
+                    <span className="block text-center text-[12px] font-medium leading-tight text-[#183B56] sm:text-[14px]">
+                      {category.title}
+                    </span>
+                  </div>
+                )
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CustomerReviews() {
   const [activeReview, setActiveReview] = useState(0);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start start', 'end end'],
-  });
-
-  useMotionValueEvent(scrollYProgress, 'change', (progress) => {
-    const nextReview = Math.min(testimonials.length - 1, Math.floor(progress * testimonials.length));
-    setActiveReview((current) => current === nextReview ? current : nextReview);
-  });
-
   const review = testimonials[activeReview];
 
   return (
     <section
-      ref={sectionRef}
       id="customer-reviews"
-      className="relative min-h-[500svh] overflow-clip bg-[#183B56] text-white"
+      className="bg-[#183B56] py-16 text-white sm:py-20"
       aria-label="Customer reviews"
     >
-      <div className="sticky top-0 -mb-[100svh] h-svh overflow-hidden bg-[url('/background.png')] bg-cover bg-center">
-        <div className="absolute inset-0 bg-[#102D44]/75" />
-        {!prefersReducedMotion && (
-          <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-            <motion.span
-              className="absolute left-[8%] top-[24%] text-2xl drop-shadow-[0_4px_12px_rgba(135,206,235,0.5)] sm:text-3xl"
-              animate={{ x: [0, 100, 220, 320], y: [0, -22, 18, -8], rotate: [-12, 12, -8, 8] }}
-              transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              🦋
-            </motion.span>
-            <motion.span
-              className="absolute right-[10%] top-[58%] text-xl drop-shadow-[0_4px_12px_rgba(214,183,122,0.45)] sm:text-2xl"
-              animate={{ x: [0, -90, -190, -270], y: [0, 20, -14, 8], rotate: [10, -12, 8, -6] }}
-              transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
-            >
-              🦋
-            </motion.span>
-            <motion.span
-              className="absolute left-[48%] top-[12%] text-lg opacity-75 sm:text-xl"
-              animate={{ x: [0, 70, 130, 30], y: [0, 24, -12, 0], rotate: [-8, 8, -12, 4] }}
-              transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-            >
-              🦋
-            </motion.span>
-          </div>
-        )}
-      </div>
-      <div className="sticky top-[76px] mx-auto flex min-h-[calc(100svh-76px)] max-w-5xl flex-col justify-center px-4 py-8 lg:px-8">
-        <div className="mb-5 flex items-end justify-between gap-4 sm:mb-6">
+      <div className="mx-auto max-w-5xl px-4 lg:px-8">
+        <div className="mb-6 flex items-end justify-between gap-4">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#cfe7f6]">Customer love</p>
             <h2 className="mt-2 max-w-[16ch] font-display text-[clamp(1.65rem,5vw,2.4rem)] leading-tight text-white">Loved by thoughtful people.</h2>
@@ -778,47 +928,49 @@ function CustomerReviews({ prefersReducedMotion }) {
             >
               Write a Review
             </Link>
-            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[10px] font-semibold tracking-[0.12em] text-[#d9f1fc]">
+            <span aria-live="polite" className="rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[10px] font-semibold tracking-[0.12em] text-[#d9f1fc]">
               {String(activeReview + 1).padStart(2, '0')} <span className="text-white/45">/ {String(testimonials.length).padStart(2, '0')}</span>
             </span>
           </div>
         </div>
 
-        <div className="relative min-h-[210px] sm:min-h-[260px]">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.article
-              key={activeReview}
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 22 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={prefersReducedMotion ? undefined : { opacity: 0, y: -18 }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: 'easeOut' }}
-              className="absolute inset-0 flex flex-col justify-center rounded-[22px] border border-white/10 bg-white/10 p-4 backdrop-blur-sm sm:rounded-[26px] sm:p-6 md:p-7"
-              aria-label={`Review ${activeReview + 1} of ${testimonials.length}`}
-            >
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-1 text-[#D6B77A]" aria-label={`${review.rating} out of 5 stars`}>
-                  {[...Array(review.rating)].map((_, index) => (
-                    <Star key={index} size={15} fill="currentColor" />
-                  ))}
-                </div>
-                <MessageCircleHeart size={20} className="shrink-0 text-[#87CEEB]" />
-              </div>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-[#edf8ff] sm:mt-4 sm:text-base sm:leading-7">
-                “{review.review}”
-              </p>
-              <div className="mt-5 flex items-center justify-between gap-4 border-t border-white/10 pt-4">
-                <div>
-                  <p className="font-display text-lg text-white sm:text-xl">{review.name}</p>
-                  <p className="mt-1 text-xs text-[#cfe7f6] sm:text-sm">{review.product}</p>
-                </div>
-              </div>
-            </motion.article>
-          </AnimatePresence>
-        </div>
-
-        <p className="mt-4 text-center text-[10px] font-medium tracking-wide text-[#cfe7f6]/75">
-          Keep scrolling to read the next story
-        </p>
+        <article className="rounded-[22px] border border-white/10 bg-white/10 p-5 sm:rounded-[26px] sm:p-7" aria-label={`Review ${activeReview + 1} of ${testimonials.length}`}>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-1 text-[#D6B77A]" aria-label={`${review.rating} out of 5 stars`}>
+              {[...Array(review.rating)].map((_, index) => (
+                <Star key={index} size={15} fill="currentColor" />
+              ))}
+            </div>
+            <MessageCircleHeart size={20} className="shrink-0 text-[#87CEEB]" />
+          </div>
+          <p className="mt-4 max-w-3xl text-sm leading-6 text-[#edf8ff] sm:text-base sm:leading-7">
+            “{review.review}”
+          </p>
+          <div className="mt-5 flex items-center justify-between gap-4 border-t border-white/10 pt-4">
+            <div>
+              <p className="font-display text-lg text-white sm:text-xl">{review.name}</p>
+              <p className="mt-1 text-xs text-[#cfe7f6] sm:text-sm">{review.product}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveReview((index) => (index - 1 + testimonials.length) % testimonials.length)}
+                className="inline-flex min-h-10 items-center rounded-full border border-white/25 px-4 text-xs font-semibold text-white transition hover:bg-white/15"
+                aria-label="Show previous review"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveReview((index) => (index + 1) % testimonials.length)}
+                className="inline-flex min-h-10 items-center rounded-full bg-white px-4 text-xs font-semibold text-[#183B56] transition hover:bg-[#d9f1fc]"
+                aria-label="Show next review"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </article>
       </div>
     </section>
   );
@@ -878,11 +1030,8 @@ function HomePage() {
 
     if (selectedCategory === 'All') return products;
 
-    const matches = products.filter(
-      (product) =>
-        product.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-        product.name.toLowerCase().includes(selectedCategory.toLowerCase()),
-    );
+    const selectedProductIds = categoryProductIds[selectedCategory] ?? [];
+    const matches = products.filter((product) => selectedProductIds.includes(product.id));
 
     return matches.length > 0 ? matches : products;
   }, [selectedCategory, selectedBudgetRange]);
@@ -967,6 +1116,7 @@ function HomePage() {
     return (
       <CategoriesPage
         products={products}
+        homeCategories={heroCategories}
         cartItems={cartItems}
         cartCount={cartCount}
         wishlistIds={wishlistIds}
@@ -1084,50 +1234,19 @@ function HomePage() {
       <main id="home" className="pt-[112px] sm:pt-[124px] lg:pt-[132px]">
         <section id="categories" className="bg-white py-5">
           <div className="mx-auto max-w-[1700px] px-3 lg:px-8">
-            <div className="category-marquee" aria-label="Featured gift categories">
-              <div className="category-marquee__track">
-                <div className="category-marquee__group" aria-label="Gift categories list">
-                  {heroCategories.map((item) => (
-                    <button
-                      key={`${item.label}-a`}
-                      type="button"
-                      onClick={() => {
-                        setSelectedCategory(item.value);
-                        setSelectedBudgetRange(null);
-                      }}
-                      className={`group min-w-[118px] shrink-0 text-center transition sm:min-w-[132px] ${selectedCategory === item.value ? 'opacity-100' : 'opacity-95'}`}
-                    >
-                      <div className={`mx-auto mb-2 h-20 w-20 overflow-hidden rounded-full border-[3px] border-white bg-[#eef5f8] shadow-[0_10px_24px_rgba(24,59,86,0.14)] transition group-hover:scale-[1.02] sm:mb-3 sm:h-28 sm:w-28 sm:border-[4px] ${selectedCategory === item.value ? 'ring-4 ring-[#183B56]/10' : ''}`}>
-                        <img src={item.image} alt={item.label} className="h-full w-full object-cover" />
-                      </div>
-                      <span className="block text-center text-[12px] font-medium leading-tight text-[#183B56] sm:text-[14px]">
-                        {item.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                <div className="category-marquee__group" aria-hidden="true">
-                  {heroCategories.map((item) => (
-                    <button
-                      key={`${item.label}-b`}
-                      type="button"
-                      onClick={() => {
-                        setSelectedCategory(item.value);
-                        setSelectedBudgetRange(null);
-                      }}
-                      className="group min-w-[118px] shrink-0 text-center transition opacity-95 sm:min-w-[132px]"
-                    >
-                      <div className="mx-auto mb-2 h-20 w-20 overflow-hidden rounded-full border-[3px] border-white bg-[#eef5f8] shadow-[0_10px_24px_rgba(24,59,86,0.14)] transition group-hover:scale-[1.02] sm:mb-3 sm:h-28 sm:w-28 sm:border-[4px]">
-                        <img src={item.image} alt={item.label} className="h-full w-full object-cover" />
-                      </div>
-                      <span className="block text-center text-[12px] font-medium leading-tight text-[#183B56] sm:text-[14px]">
-                        {item.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <FeaturedCategoriesCarousel
+              categories={giftCategories}
+              selectedCategory={selectedCategory}
+              prefersReducedMotion={prefersReducedMotion}
+              onSelectCategory={(categoryId) => {
+                setSelectedCategory(categoryId);
+                setSelectedBudgetRange(null);
+                document.getElementById('featured-products')?.scrollIntoView({
+                  behavior: prefersReducedMotion ? 'auto' : 'smooth',
+                  block: 'start',
+                });
+              }}
+            />
           </div>
         </section>
 
@@ -1200,6 +1319,17 @@ function HomePage() {
               onAddToBag={handleAddToBag}
               onViewProduct={setSelectedProduct}
             />
+            <ShopByBudget
+              selectedBudgetRange={selectedBudgetRange}
+              onSelectBudget={(range) => {
+                setSelectedCategory('All');
+                setSelectedBudgetRange(range);
+                document.getElementById('featured-products')?.scrollIntoView({
+                  behavior: prefersReducedMotion ? 'auto' : 'smooth',
+                  block: 'start',
+                });
+              }}
+            />
             <div className="mx-auto mt-8 grid max-w-6xl grid-cols-1 gap-4 sm:mt-10 lg:grid-cols-2 lg:gap-6">
               {[
                 {
@@ -1260,51 +1390,10 @@ function HomePage() {
                 </article>
               ))}
             </div>
-            <div className="mx-auto mt-12 max-w-4xl sm:mt-16">
-              <div className="text-center">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#A9874D]">A lovely gift for every budget</p>
-                <h3 className="mt-2 font-display text-2xl text-[#183B56] sm:text-3xl">Shop by Budget</h3>
-              </div>
-              <div className="mt-6 grid grid-cols-3 gap-2 sm:mt-8 sm:gap-6">
-                {budgetRanges.map((range) => {
-                  const isSelected = selectedBudgetRange?.id === range.id;
-
-                  return (
-                    <button
-                      key={range.id}
-                      type="button"
-                      aria-pressed={isSelected}
-                      aria-label={range.amount ? `Show gifts under ₹${range.amount}` : `Show gifts from ₹${range.min} to ₹${range.max}`}
-                      onClick={() => {
-                        setSelectedCategory('All');
-                        setSelectedBudgetRange(range);
-                        document.getElementById('featured-products')?.scrollIntoView({
-                          behavior: prefersReducedMotion ? 'auto' : 'smooth',
-                          block: 'start',
-                        });
-                      }}
-                      className="group flex flex-col items-center text-center"
-                    >
-                      <span className={`flex aspect-square w-full max-w-[174px] flex-col items-center justify-center rounded-full border-[5px] border-white bg-gradient-to-br from-[#183B56] via-[#21658A] to-[#87CEEB] px-2 text-white shadow-[0_14px_34px_rgba(24,59,86,0.2)] ring-1 ring-[#87CEEB]/40 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_20px_40px_rgba(24,59,86,0.28)] group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#D6B77A] sm:border-[7px] ${isSelected ? 'scale-105 ring-4 ring-[#D6B77A]' : ''}`}>
-                        <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#DDF5FF] sm:text-xs">
-                          {range.amount ? 'Under' : 'Budget'}
-                        </span>
-                        <span className="mt-1 font-display text-[clamp(1.05rem,3.8vw,2rem)] leading-tight">
-                          {range.amount ? `₹${range.amount}` : `₹${range.min}–${range.max}`}
-                        </span>
-                      </span>
-                      <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#183B56] sm:mt-3 sm:text-xs">
-                        {range.amount ? 'And under' : 'Gift range'}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </section>
 
-        <CustomerReviews prefersReducedMotion={prefersReducedMotion} />
+        <CustomerReviews />
 
         <section className="mx-auto max-w-7xl px-4 py-14 sm:py-20 lg:px-8 lg:py-24">
           <div className="rounded-[28px] bg-[linear-gradient(135deg,#dff3fb,#edf8ff_51%,#fff9f1)] p-5 shadow-[0_30px_90px_rgba(24,59,86,0.08)] sm:rounded-[38px] sm:p-8 md:p-12">

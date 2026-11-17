@@ -21,68 +21,6 @@ import WishlistDrawer from '../components/WishlistDrawer';
 import { getProductImage } from '../data/productImages';
 import './CategoriesPage.css';
 
-const giftCategories = [
-  {
-    id: 'birthday',
-    title: 'Birthday Gifts',
-    subtitle: 'Make their day unforgettable.',
-    image: '/category-birthday.png',
-  },
-  {
-    id: 'anniversary',
-    title: 'Anniversary Gifts',
-    subtitle: 'Celebrate a love that keeps growing.',
-    image: '/category-anniversary.png',
-  },
-  {
-    id: 'wedding',
-    title: 'Wedding Gifts',
-    subtitle: 'For the beginning of forever.',
-    image: '/category-wedding.png',
-  },
-  {
-    id: 'women',
-    title: 'Women Gifts',
-    subtitle: 'Beautifully thoughtful gifts for her.',
-    image: '/category-women.png',
-  },
-  {
-    id: 'boys',
-    title: 'Boys Gifts',
-    subtitle: 'Fun surprises for the boys in your life.',
-    image: '/category-boys.png',
-  },
-  {
-    id: 'kids',
-    title: 'Kids Gifts',
-    subtitle: 'Little gifts for big smiles.',
-    image: '/category-kids.png',
-  },
-  {
-    id: 'return-gifts',
-    title: 'Return Gifts',
-    subtitle: 'Thank your guests with a lovely keepsake.',
-    image: '/category-return-gifts.png',
-  },
-  {
-    id: 'hampers',
-    title: 'Hampers',
-    subtitle: 'A little of everything, beautifully packed.',
-    image: '/category-hampers.png',
-  },
-];
-
-const categoryProductIds = {
-  birthday: ['birthday-box', 'luxury-hamper', 'chocolate-box', 'teddy-bear', 'flower-bouquet'],
-  anniversary: ['flower-bouquet', 'photo-frame', 'candle-set', 'luxury-hamper', 'chocolate-box'],
-  wedding: ['luxury-hamper', 'flower-bouquet', 'photo-frame', 'candle-set', 'name-gift'],
-  women: ['photo-frame', 'flower-bouquet', 'name-gift', 'candle-set', 'luxury-hamper'],
-  boys: ['teddy-bear', 'birthday-box', 'chocolate-box', 'name-gift'],
-  kids: ['teddy-bear', 'birthday-box', 'chocolate-box'],
-  'return-gifts': ['chocolate-box', 'name-gift', 'candle-set', 'teddy-bear', 'flower-bouquet', 'birthday-box'],
-  hampers: ['luxury-hamper', 'birthday-box', 'chocolate-box', 'flower-bouquet'],
-};
-
 const navigationLinks = [
   { label: 'Home', to: '/' },
   { label: 'Categories', to: '/categories' },
@@ -161,6 +99,7 @@ function ProductCard({ product, isWishlisted, onToggleWishlist, onAddToBag, onVi
 
 function CategoriesPage({
   products,
+  homeCategories,
   cartItems,
   cartCount,
   wishlistIds,
@@ -181,16 +120,16 @@ function CategoriesPage({
   const prefersReducedMotion = useReducedMotion();
   const carouselRef = useRef(null);
   const productSectionRef = useRef(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState('birthday');
+  const [selectedCategoryId, setSelectedCategoryId] = useState(homeCategories[0]?.id);
   const [sortBy, setSortBy] = useState('popularity');
   const [visibleCount, setVisibleCount] = useState(4);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const selectedCategory = giftCategories.find((category) => category.id === selectedCategoryId) ?? giftCategories[0];
+  const selectedCategory = homeCategories.find((category) => category.id === selectedCategoryId) ?? homeCategories[0];
   const categoryProducts = useMemo(() => {
-    const allowedIds = categoryProductIds[selectedCategoryId] ?? [];
+    const allowedIds = homeCategories.find((category) => category.id === selectedCategoryId)?.productIds ?? [];
     const matches = products.filter((product) => allowedIds.includes(product.id));
     const sourceOrder = new Map(matches.map((product, index) => [product.id, index]));
 
@@ -213,7 +152,7 @@ function CategoriesPage({
       return getPopularity(second) - getPopularity(first)
         || sourceOrder.get(first.id) - sourceOrder.get(second.id);
     });
-  }, [products, selectedCategoryId, sortBy]);
+  }, [homeCategories, products, selectedCategoryId, sortBy]);
 
   const searchResults = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -368,7 +307,7 @@ function CategoriesPage({
 
             <div className="relative">
               <div ref={carouselRef} className="gift-category-carousel-track flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-5 sm:gap-6">
-                {giftCategories.map((category, index) => (
+                {homeCategories.map((category, index) => (
                   <motion.button
                     key={category.id}
                     type="button"
@@ -389,6 +328,9 @@ function CategoriesPage({
                       whileHover={prefersReducedMotion ? undefined : { scale: 1.06 }}
                       transition={{ duration: 0.7, ease: 'easeOut' }}
                     />
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#102D44]/90 to-transparent px-5 pb-5 pt-14 font-display text-xl text-white sm:text-2xl">
+                      {category.title}
+                    </span>
                   </motion.button>
                 ))}
               </div>
