@@ -1,11 +1,5 @@
 export const giftCategories = [
   {
-    id: 'birthday',
-    title: 'Birthday Gifts',
-    subtitle: 'Make their day unforgettable.',
-    image: '/category-birthday.png',
-  },
-  {
     id: 'anniversary',
     title: 'Anniversary Gifts',
     subtitle: 'Celebrate a love that keeps growing.',
@@ -50,12 +44,12 @@ export const giftCategories = [
 ];
 
 export const categoryProductIds = {
-  birthday: ['birthday-box', 'luxury-hamper', 'chocolate-box', 'teddy-bear', 'flower-bouquet'],
-  anniversary: ['flower-bouquet', 'photo-frame', 'candle-set', 'luxury-hamper', 'chocolate-box'],
-  wedding: ['luxury-hamper', 'flower-bouquet', 'photo-frame', 'candle-set', 'name-gift'],
-  women: ['photo-frame', 'flower-bouquet', 'name-gift', 'candle-set', 'luxury-hamper'],
-  boys: ['teddy-bear', 'birthday-box', 'chocolate-box', 'name-gift'],
-  kids: ['teddy-bear', 'birthday-box', 'chocolate-box'],
-  'return-gifts': ['chocolate-box', 'name-gift', 'candle-set', 'teddy-bear', 'flower-bouquet', 'birthday-box'],
-  hampers: ['luxury-hamper', 'birthday-box', 'chocolate-box', 'flower-bouquet'],
+  birthday: ['collection-keychain', 'collection-mobile-cover', 'collection-engraved-pen', 'collection-photo-calendar', 'collection-engraved-bottle'],
+  anniversary: ['collection-crystal-photo', 'collection-photo-frame', 'collection-crystal-led', 'collection-photo-clock', 'collection-name-jewellery', 'collection-led-photo-lamp', 'collection-moon-lamp', 'collection-photo-calendar'],
+  wedding: ['collection-crystal-photo', 'collection-photo-frame', 'collection-keychain', 'collection-crystal-led', 'collection-photo-clock', 'collection-engraved-pen', 'collection-name-jewellery', 'collection-led-photo-lamp', 'collection-moon-lamp', 'collection-photo-calendar', 'collection-engraved-bottle'],
+  women: ['collection-crystal-photo', 'collection-photo-frame', 'collection-keychain', 'collection-crystal-led', 'collection-photo-clock', 'collection-name-jewellery', 'collection-led-photo-lamp', 'collection-moon-lamp', 'collection-photo-calendar'],
+  boys: ['collection-keychain', 'collection-mobile-cover', 'collection-engraved-pen', 'collection-engraved-bottle'],
+  kids: ['collection-keychain', 'collection-mobile-cover', 'collection-engraved-pen', 'collection-engraved-bottle'],
+  'return-gifts': ['collection-keychain', 'collection-mobile-cover', 'collection-engraved-pen', 'collection-photo-calendar', 'collection-engraved-bottle'],
+  hampers: ['collection-crystal-photo', 'collection-photo-frame', 'collection-keychain', 'collection-mobile-cover', 'collection-crystal-led', 'collection-photo-clock', 'collection-engraved-pen', 'collection-name-jewellery', 'collection-led-photo-lamp', 'collection-moon-lamp', 'collection-photo-calendar', 'collection-engraved-bottle'],
 };

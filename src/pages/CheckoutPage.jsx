@@ -38,6 +38,26 @@ function CheckoutPage({ items, onOrderPlaced }) {
               <span className="text-xl font-semibold">{formatPrice(subtotal)}</span>
             </div>
             <p className="mt-2 text-sm text-[#5d7383]">Payment preference: {paymentMethod}</p>
+            {orderItems.some((item) => item.personalization) && (
+              <div className="mt-5 space-y-3 border-t border-[#E3EDF4] pt-4">
+                {orderItems.filter((item) => item.personalization).map((item) => (
+                  <div key={item.id} className="flex items-start gap-3 text-sm">
+                    {item.personalization.photo && <img src={item.personalization.photo} alt="Uploaded personalization" className="h-12 w-12 rounded-lg object-cover" />}
+                    <div className="min-w-0">
+                      <p className="font-medium text-[#183B56]">{item.name}</p>
+                      {item.personalization.name && <p className="mt-1 text-xs text-[#5d7383]">Name: {item.personalization.name}</p>}
+                      {item.personalization.message && <p className="mt-1 text-xs text-[#5d7383]">Message: {item.personalization.message}</p>}
+                      {(item.personalization.fontStyle || item.personalization.designStyle) && (
+                        <p className="mt-1 text-xs text-[#5d7383]">{[item.personalization.fontStyle, item.personalization.designStyle].filter(Boolean).join(' · ')}</p>
+                      )}
+                      {item.deliveryPreference?.location && <p className="mt-1 text-xs text-[#5d7383]">Delivery area: {item.deliveryPreference.location}</p>}
+                      {item.deliveryPreference?.date && <p className="mt-1 text-xs text-[#5d7383]">Preferred date: {item.deliveryPreference.date}</p>}
+                      {item.deliveryPreference?.slot && <p className="mt-1 text-xs text-[#5d7383]">Preferred time: {item.deliveryPreference.slot}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <button
             type="button"
@@ -98,7 +118,7 @@ function CheckoutPage({ items, onOrderPlaced }) {
                 </label>
                 <label className="text-sm font-medium text-[#183B56]">
                   Phone number
-                  <input required name="phone" type="tel" autoComplete="tel" pattern="[0-9+\-\s()]{10,15}" className="mt-2 w-full rounded-2xl border border-[#D9E7EF] bg-[#FBFDFF] px-4 py-3 outline-none transition focus:border-[#87CEEB]" placeholder="+91 98765 43210" />
+                  <input required name="phone" type="tel" autoComplete="tel" pattern="(?:[0-9]|\x2B|\x20|\x2D|\x28|\x29){10,15}" className="mt-2 w-full rounded-2xl border border-[#D9E7EF] bg-[#FBFDFF] px-4 py-3 outline-none transition focus:border-[#87CEEB]" placeholder="+91 98765 43210" />
                 </label>
                 <label className="text-sm font-medium text-[#183B56] sm:col-span-2">
                   Email address
@@ -159,7 +179,22 @@ function CheckoutPage({ items, onOrderPlaced }) {
                     <span className="absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#183B56] px-1 text-xs font-semibold text-white">{item.quantity}</span>
                   </div>
                   <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-[#183B56]">{item.name}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[#183B56]">{item.name}</p>
+                      {item.personalization && (
+                        <div className="mt-1 space-y-1 text-[11px] leading-4 text-[#71869A]">
+                          {item.personalization.name && <p>Name: {item.personalization.name}</p>}
+                          {item.personalization.message && <p>Message: {item.personalization.message}</p>}
+                          {(item.personalization.fontStyle || item.personalization.designStyle) && (
+                            <p>{[item.personalization.fontStyle, item.personalization.designStyle].filter(Boolean).join(' · ')}</p>
+                          )}
+                          {item.deliveryPreference?.location && <p>Delivery area: {item.deliveryPreference.location}</p>}
+                          {item.deliveryPreference?.date && <p>Preferred date: {item.deliveryPreference.date}</p>}
+                          {item.deliveryPreference?.slot && <p>Preferred time: {item.deliveryPreference.slot}</p>}
+                          {item.personalization.photo && <img src={item.personalization.photo} alt="Uploaded personalization" className="mt-2 h-10 w-10 rounded-md object-cover" />}
+                        </div>
+                      )}
+                    </div>
                     <p className="shrink-0 text-sm font-semibold">{formatPrice(item.price * item.quantity)}</p>
                   </div>
                 </div>

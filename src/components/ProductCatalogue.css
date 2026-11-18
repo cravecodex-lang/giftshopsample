@@ -282,6 +282,8 @@
   color: var(--catalogue-navy);
   cursor: pointer;
   box-shadow: 0 18px 35px rgba(24, 59, 86, 0.08);
+  user-select: none;
+  -webkit-user-select: none;
   backface-visibility: hidden;
 }
 

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { BookOpen, Gift, Heart, ShoppingBag, Sparkles, Star } from 'lucide-react';
-import { getProductImage } from '../data/productImages';
 import './ProductCatalogue.css';
 
 const formatPrice = (price) => `₹${price.toLocaleString('en-IN')}`;
@@ -15,7 +14,6 @@ function ProductPage({ product, pageNumber, isWishlisted, onToggleWishlist, onAd
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
-
   return (
     <article className="catalogue-page" data-page-index={pageNumber - 1} aria-label={`${product.name}, page ${pageNumber}`}>
       <div className="catalogue-page__topline">
@@ -25,7 +23,7 @@ function ProductPage({ product, pageNumber, isWishlisted, onToggleWishlist, onAd
 
       <div className="catalogue-page__photograph">
         {product.badge && <span className="catalogue-page__badge">{product.badge}</span>}
-        <img src={getProductImage(product)} alt={product.name} draggable="false" />
+        <img src={product.image} alt={product.imageAlt ?? product.name} draggable="false" />
       </div>
 
       <div className="catalogue-page__details">
@@ -71,7 +69,8 @@ function ProductCatalogue({ products, wishlistIds, onToggleWishlist, onAddToBag 
   const [pageIndex, setPageIndex] = useState(0);
   const [flip, setFlip] = useState(null);
   const [bookState, setBookState] = useState('closed');
-  const touchStartX = useRef(null);
+  const pointerStart = useRef(null);
+  const suppressClick = useRef(false);
   const visiblePageCount = isMobile ? 1 : 2;
   const lastPageIndex = Math.max(0, products.length - visiblePageCount);
   const safePageIndex = Math.min(pageIndex, lastPageIndex);
@@ -142,16 +141,51 @@ function ProductCatalogue({ products, wishlistIds, onToggleWishlist, onAddToBag 
     }
   };
 
-  const handleTouchEnd = (event) => {
-    if (bookState !== 'open') return;
-    if (touchStartX.current === null) return;
-    const distance = event.changedTouches[0].clientX - touchStartX.current;
-    touchStartX.current = null;
-    if (Math.abs(distance) < 45) return;
-    turnPage(distance < 0 ? 'next' : 'previous');
+  const handlePointerDown = (event) => {
+    if (
+      bookState !== 'open'
+      || !event.isPrimary
+      || (event.pointerType === 'mouse' && event.button !== 0)
+      || event.target.closest('button, a, input, textarea, select')
+      || !event.target.closest('.catalogue-page:not(.catalogue-page--blank)')
+    ) {
+      return;
+    }
+
+    pointerStart.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerUp = (event) => {
+    const start = pointerStart.current;
+    if (!start || start.pointerId !== event.pointerId) return;
+    pointerStart.current = null;
+
+    const distanceX = event.clientX - start.x;
+    const distanceY = event.clientY - start.y;
+    if (Math.abs(distanceX) < 48 || Math.abs(distanceX) < Math.abs(distanceY)) return;
+
+    suppressClick.current = true;
+    window.setTimeout(() => {
+      suppressClick.current = false;
+    }, 500);
+    turnPage(distanceX < 0 ? 'next' : 'previous');
+  };
+
+  const handlePointerCancel = () => {
+    pointerStart.current = null;
   };
 
   const handleBookClick = (event) => {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      event.preventDefault();
+      return;
+    }
     if (bookState !== 'open') return;
     if (event.target.closest('button, a, input, textarea, select')) return;
 
@@ -200,9 +234,10 @@ function ProductCatalogue({ products, wishlistIds, onToggleWishlist, onAddToBag 
         tabIndex={0}
         onClick={handleBookClick}
         onKeyDown={handleKeyDown}
-        onTouchStart={(event) => { touchStartX.current = event.touches[0].clientX; }}
-        onTouchEnd={handleTouchEnd}
-        aria-label="Interactive gift catalogue. Click the left or right page, swipe on a phone, or use the arrow keys to turn pages."
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+        aria-label="Interactive gift catalogue. Drag a page with a mouse, swipe on a phone, click a page, or use the arrow keys to turn pages."
       >
         <div className="catalogue-book__cover" aria-hidden="true" />
         <button

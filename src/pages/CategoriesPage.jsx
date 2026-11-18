@@ -10,22 +10,27 @@ import {
   Search,
   ShoppingBag,
   Sparkles,
+  UserRound,
   X,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import AccountAuthModal from '../components/AccountAuthModal';
 import CartDrawer from '../components/CartDrawer';
 import Logo from '../components/Logo';
+import PersonalizedMegaMenu from '../components/PersonalizedMegaMenu';
 import QuickViewModal from '../components/QuickViewModal';
 import SearchOverlay from '../components/SearchOverlay';
 import WishlistDrawer from '../components/WishlistDrawer';
+import { contactConfig } from '../data/contactConfig';
+import { personalizedProducts } from '../data/personalizedData';
 import { getProductImage } from '../data/productImages';
 import './CategoriesPage.css';
 
 const navigationLinks = [
   { label: 'Home', to: '/' },
   { label: 'Categories', to: '/categories' },
-  { label: 'Shop All', to: '/#featured-products' },
-  { label: 'Contact Us', to: '/#contact' },
+  { label: 'Personalized', to: '/#featured-products' },
+  { label: 'Contact Us', to: '/contact' },
 ];
 
 function ProductCard({ product, isWishlisted, onToggleWishlist, onAddToBag, onViewProduct, prefersReducedMotion }) {
@@ -106,6 +111,9 @@ function CategoriesPage({
   wishlistProducts,
   cartOpen,
   wishlistOpen,
+  accountOpen,
+  onSetAccountOpen,
+  onPersonalizeProduct,
   onSetCartOpen,
   onSetWishlistOpen,
   onToggleWishlist,
@@ -156,9 +164,10 @@ function CategoriesPage({
 
   const searchResults = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
+    const searchableProducts = [...products, ...personalizedProducts];
     const matches = !query
-      ? products.slice(0, 6)
-      : products.filter((product) =>
+      ? searchableProducts.slice(0, 6)
+      : searchableProducts.filter((product) =>
         `${product.name} ${product.category} ${product.badge ?? ''}`.toLowerCase().includes(query),
       );
     return matches.map((product) => ({ ...product, image: getProductImage(product) }));
@@ -203,33 +212,39 @@ function CategoriesPage({
 
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-3 py-3 sm:px-4 sm:py-4 lg:px-8">
           <Link to="/" aria-label="Home" className="shrink-0">
-            <Logo />
+            <Logo compact />
           </Link>
 
           <div className="hidden items-center gap-8 lg:flex">
             {navigationLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className={`group relative text-sm font-medium tracking-[0.02em] transition hover:text-[#B9D9F5] ${link.label === 'Categories' ? 'text-[#B9D9F5]' : 'text-white'}`}
-              >
-                {link.label}
-                <span className={`absolute -bottom-1 left-0 h-px w-full origin-left bg-[#B9D9F5] transition-transform duration-300 ${link.label === 'Categories' ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`} />
-              </Link>
+              link.label === 'Personalized' ? (
+                <PersonalizedMegaMenu key={link.label} />
+              ) : (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className={`group relative text-sm font-medium tracking-[0.02em] transition hover:text-[#B9D9F5] ${link.label === 'Categories' ? 'text-[#B9D9F5]' : 'text-white'}`}
+                >
+                  {link.label}
+                  <span className={`absolute -bottom-1 left-0 h-px w-full origin-left bg-[#B9D9F5] transition-transform duration-300 ${link.label === 'Categories' ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`} />
+                </Link>
+              )
             ))}
           </div>
 
-          <div className="hidden items-center gap-3 lg:flex">
-            <button type="button" onClick={() => setSearchOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/95 text-[#153b60] shadow-sm transition hover:bg-white" aria-label="Search gifts">
-              <Search size={18} />
+          <div className="flex items-center gap-0.5 sm:gap-1">
+            <button type="button" onClick={() => setSearchOpen(true)} className="flex h-8 w-8 items-center justify-center rounded-full text-white transition hover:bg-white/10 hover:text-[#B9D9F5] sm:h-9 sm:w-9" aria-label="Search gifts">
+              <Search size={19} />
             </button>
-            <button type="button" onClick={() => onSetWishlistOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/95 text-[#153b60] shadow-sm transition hover:bg-white" aria-label="Open wishlist">
-              <Heart size={18} />
+            <button type="button" onClick={() => onSetAccountOpen(true)} className="flex h-8 w-8 items-center justify-center rounded-full text-white transition hover:bg-white/10 hover:text-[#B9D9F5] sm:h-9 sm:w-9" aria-label="Open account login">
+              <UserRound size={19} />
             </button>
-            <button type="button" onClick={() => onSetCartOpen(true)} className="relative flex items-center gap-3 rounded-full bg-[#102D44] px-4 py-2.5 text-white shadow-[0_20px_40px_rgba(10,35,55,0.24)]" aria-label={`Cart, ${cartCount} items`}>
-              <ShoppingBag size={18} />
-              <span className="text-sm font-medium">Bag</span>
-              <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#B9D9F5] px-1.5 text-xs font-semibold text-[#153b60]">{cartCount}</span>
+            <button type="button" onClick={() => onSetWishlistOpen(true)} className="flex h-8 w-8 items-center justify-center rounded-full text-white transition hover:bg-white/10 hover:text-[#B9D9F5] sm:h-9 sm:w-9" aria-label="Open wishlist">
+              <Heart size={19} />
+            </button>
+            <button type="button" onClick={() => onSetCartOpen(true)} className="relative flex h-8 w-8 items-center justify-center rounded-full text-white transition hover:bg-white/10 hover:text-[#B9D9F5] sm:h-9 sm:w-9" aria-label={`Cart, ${cartCount} items`}>
+              <ShoppingBag size={19} />
+              <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#B9D9F5] px-1 text-[9px] font-semibold text-[#153b60]">{cartCount}</span>
             </button>
           </div>
 
@@ -248,23 +263,14 @@ function CategoriesPage({
             >
               <div className="space-y-4">
                 {navigationLinks.map((link) => (
-                  <Link key={link.label} to={link.to} onClick={() => setMenuOpen(false)} className="block text-base font-medium text-white">
-                    {link.label}
-                  </Link>
+                  link.label === 'Personalized' ? (
+                    <PersonalizedMegaMenu key={link.label} mobile onNavigate={() => setMenuOpen(false)} />
+                  ) : (
+                    <Link key={link.label} to={link.to} onClick={() => setMenuOpen(false)} className="block text-base font-medium text-white">
+                      {link.label}
+                    </Link>
+                  )
                 ))}
-                <div className="flex items-center gap-3 pt-2">
-                  <button type="button" onClick={() => { setSearchOpen(true); setMenuOpen(false); }} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-[#153b60]" aria-label="Search gifts">
-                    <Search size={18} />
-                  </button>
-                  <button type="button" onClick={() => { onSetWishlistOpen(true); setMenuOpen(false); }} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-[#153b60]" aria-label="Open wishlist">
-                    <Heart size={18} />
-                  </button>
-                  <button type="button" onClick={() => { onSetCartOpen(true); setMenuOpen(false); }} className="flex items-center gap-3 rounded-full bg-[#102D44] px-4 py-2.5 text-white" aria-label={`Cart, ${cartCount} items`}>
-                    <ShoppingBag size={18} />
-                    <span>Bag</span>
-                    <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#B9D9F5] px-1.5 text-xs font-semibold text-[#153b60]">{cartCount}</span>
-                  </button>
-                </div>
               </div>
             </motion.div>
           ) : null}
@@ -423,7 +429,7 @@ function CategoriesPage({
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B9D9F5]">Support</p>
             <ul className="mt-5 space-y-3 text-sm text-[#EAF7FC]">
-              <li><Link to="/#contact">Contact Us</Link></li>
+              <li><Link to="/contact">Contact Us</Link></li>
               <li><Link to="/write-review">Write a Review</Link></li>
               <li><a href="#top">Back to top</a></li>
             </ul>
@@ -431,9 +437,9 @@ function CategoriesPage({
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B9D9F5]">Contact</p>
             <ul className="mt-5 space-y-3 text-sm text-[#EAF7FC]">
-              <li>hello@[yourgiftshopname].com</li>
-              <li>+91 98765 43210</li>
-              <li>12 Amber Lane, Bengaluru</li>
+              <li>{contactConfig.email || 'Business email not configured'}</li>
+              <li>{contactConfig.phone || 'Business phone not configured'}</li>
+              <li>{contactConfig.address || 'Shop address not configured'}</li>
             </ul>
           </div>
         </div>
@@ -449,6 +455,7 @@ function CategoriesPage({
         results={searchResults}
         onClose={() => setSearchOpen(false)}
         onQuickView={(product) => onViewProduct({ ...product, image: getProductImage(product) })}
+        onPersonalize={onPersonalizeProduct}
         onAddToBag={onAddToBag}
       />
       <CartDrawer
@@ -465,8 +472,10 @@ function CategoriesPage({
         onClose={() => onSetWishlistOpen(false)}
         onRemove={onToggleWishlist}
         onAddToBag={onAddToBag}
+        onPersonalize={onPersonalizeProduct}
       />
       <QuickViewModal product={selectedProduct} onClose={onCloseProduct} onAddToBag={onAddToBag} />
+      <AccountAuthModal isOpen={accountOpen} onClose={() => onSetAccountOpen(false)} />
     </div>
   );
 }

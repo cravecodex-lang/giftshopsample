@@ -1,16 +1,24 @@
-# React + Vite
+# Mr & Mrs Gifts
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Responsive React storefront with a contact-enquiry API backed by MongoDB.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Copy `.env.example` to `.env`.
+2. Set `MONGODB_URI` to a MongoDB database you control.
+3. Add the real business contact values and URLs to the `VITE_CONTACT_*` variables. Leave unknown details blank; the site shows that they are not configured.
+4. Install dependencies with `npm install`.
+5. Run the website and API together with `npm run dev`.
 
-## React Compiler
+The Vite development server proxies `/api` requests to the Express API on port `5000`. To run only the frontend, use `npm run dev:client`. To run the API separately, use `npm run server`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Contact enquiries
 
-## Expanding the Oxlint configuration
+`POST /api/contact` validates and stores contact messages in the `ContactEnquiry` MongoDB collection. Enquiries contain the customer name, email, phone, subject, and message. This repository does not include an admin panel; use an authenticated MongoDB/admin tool to review stored enquiries.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+The contact form requires the API and MongoDB to be available. The API returns a clear service-unavailable response when `MONGODB_URI` is missing or MongoDB cannot be reached.
+
+## Build
+
+- `npm run build` creates the production frontend bundle.
+- `npm run lint` runs Oxlint.

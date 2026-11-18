@@ -50,6 +50,25 @@ const CartDrawer = ({ isOpen, items, onClose, onUpdateQuantity, onRemoveItem, on
                     <div>
                       <p className="font-display text-lg leading-tight text-[#183B56]">{item.name}</p>
                       <p className="mt-1 text-xs text-[#6a8194]">₹{item.price.toLocaleString('en-IN')} each</p>
+                      {item.personalization && (
+                        <div className="mt-2 space-y-1 text-[11px] leading-4 text-[#5d7383]">
+                          {item.personalization.name && <p>Personalized for: {item.personalization.name}</p>}
+                          {item.personalization.message && <p>Message: {item.personalization.message}</p>}
+                          {(item.personalization.fontStyle || item.personalization.designStyle) && (
+                            <p>{[item.personalization.fontStyle, item.personalization.designStyle].filter(Boolean).join(' · ')}</p>
+                          )}
+                          {item.personalization.photo && (
+                            <img src={item.personalization.photo} alt="Uploaded personalization" className="mt-2 h-12 w-12 rounded-lg border border-[#D9E7EF] object-cover" />
+                          )}
+                        </div>
+                      )}
+                      {item.deliveryPreference && (
+                        <div className="mt-2 space-y-1 text-[11px] leading-4 text-[#5d7383]">
+                          {item.deliveryPreference.location && <p>Delivery area: {item.deliveryPreference.location}</p>}
+                          {item.deliveryPreference.date && <p>Preferred date: {item.deliveryPreference.date}</p>}
+                          {item.deliveryPreference.slot && <p>Preferred time: {item.deliveryPreference.slot}</p>}
+                        </div>
+                      )}
                     </div>
                     <button type="button" onClick={() => onRemoveItem(item.id)} className="h-fit text-xs font-medium text-[#6a8194] underline">
                       Remove

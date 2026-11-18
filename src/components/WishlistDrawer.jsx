@@ -1,6 +1,6 @@
 import { Heart, ShoppingCart, X } from 'lucide-react';
 
-const WishlistDrawer = ({ isOpen, items, onClose, onRemove, onAddToBag }) => (
+const WishlistDrawer = ({ isOpen, items, onClose, onRemove, onAddToBag, onPersonalize }) => (
   <>
     <div
       className={`fixed inset-0 z-40 bg-[#183B56]/30 backdrop-blur-[2px] transition ${isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
@@ -48,11 +48,11 @@ const WishlistDrawer = ({ isOpen, items, onClose, onRemove, onAddToBag }) => (
                 </div>
                 <button
                   type="button"
-                  onClick={() => onAddToBag(item)}
+                  onClick={() => (item.personalized ? onPersonalize(item) : onAddToBag(item))}
                   className="inline-flex w-fit items-center gap-2 rounded-full bg-[#183B56] px-3 py-2 text-xs font-medium text-white transition hover:bg-[#234d72]"
                 >
                   <ShoppingCart size={14} />
-                  Add to Bag
+                  {item.personalized ? 'Personalize' : 'Add to Bag'}
                 </button>
               </div>
             </div>

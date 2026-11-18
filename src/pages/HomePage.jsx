@@ -22,24 +22,31 @@ import {
   X,
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import AccountAuthModal from '../components/AccountAuthModal';
 import BestSellersCarousel from '../components/BestSellersCarousel';
 import CartDrawer from '../components/CartDrawer';
+import ContactPage from './ContactPage';
 import CategoriesPage from './CategoriesPage';
 import CheckoutPage from './CheckoutPage';
 import Logo from '../components/Logo';
 import PersonalizeModal from '../components/PersonalizeModal';
+import PersonalizedGiftsContent from '../components/PersonalizedGiftsContent';
+import PersonalizedMegaMenu from '../components/PersonalizedMegaMenu';
 import ProductCatalogue from '../components/ProductCatalogue';
 import QuickViewModal from '../components/QuickViewModal';
 import SearchOverlay from '../components/SearchOverlay';
 import WishlistDrawer from '../components/WishlistDrawer';
 import { products, testimonials } from '../data/mockData';
+import { ourCollectionProducts } from '../data/ourCollectionProducts';
 import { categoryProductIds, giftCategories } from '../data/giftCategories';
+import { contactConfig } from '../data/contactConfig';
+import { personalizedProducts } from '../data/personalizedData';
 
 const navLinks = [
   { label: 'Home', href: '#home' },
   { label: 'Categories', href: '/categories' },
-  { label: 'Shop All', href: '#featured-products' },
-  { label: 'Contact Us', href: '#contact' },
+  { label: 'Personalized', href: '/personalized' },
+  { label: 'Contact Us', href: '/contact' },
 ];
 
 const giftSceneVariants = {
@@ -97,12 +104,13 @@ const giftDetailVariants = {
 };
 
 const heroCategories = [
-  { id: 'photo-album-keychains', title: 'Photo Album Keychains', subtitle: 'Keep favourite moments close.', image: '/Romantic%20Mini%20Photo%20Album%20Keychain.png', productIds: ['photo-frame', 'name-gift'] },
-  { id: 'heart-lockets', title: 'Heart Lockets', subtitle: 'A keepsake made with love.', image: '/Silver%20Heart%20Locket%20on%20Green%20Grass.png', productIds: ['name-gift', 'photo-frame'] },
-  { id: 'moon-lamps', title: 'Moon Lamps', subtitle: 'A little glow for their space.', image: '/Romantic%20Crescent%20Moon%20LED%20Lamp.png', productIds: ['candle-set'] },
-  { id: 'photo-mugs', title: 'Photo Mugs', subtitle: 'Make every sip personal.', image: '/Personalized%20Portrait%20Photo%20Mug.png', productIds: ['photo-frame', 'name-gift'] },
-  { id: 'baby-keepsakes', title: 'Baby Keepsakes', subtitle: 'Celebrate their tiniest moments.', image: '/Personalized%20Crystal%20Baby%20Keepsake%20Lamp.png', productIds: ['photo-frame', 'name-gift'] },
-  { id: 'wedding-plaques', title: 'Wedding Plaques', subtitle: 'A lasting keepsake for forever.', image: '/Golden%20Happy%20Married%20Life%20Plaque.png', productIds: ['birthday-box', 'name-gift'] },
+  { id: 'anniversary', title: 'Anniversary Gifts', subtitle: 'Celebrate a love that keeps growing.', image: '/category-anniversary.png', productIds: ['flower-bouquet', 'photo-frame', 'candle-set', 'luxury-hamper', 'chocolate-box'] },
+  { id: 'wedding', title: 'Wedding Gifts', subtitle: 'For the beginning of forever.', image: '/category-wedding.png', productIds: ['luxury-hamper', 'flower-bouquet', 'photo-frame', 'candle-set', 'name-gift'] },
+  { id: 'women', title: 'Women Gifts', subtitle: 'Beautifully thoughtful gifts for her.', image: '/category-women.png', productIds: ['photo-frame', 'flower-bouquet', 'name-gift', 'candle-set', 'luxury-hamper'] },
+  { id: 'boys', title: 'Boys Gifts', subtitle: 'Fun surprises for the boys in your life.', image: '/category-boys.png', productIds: ['teddy-bear', 'birthday-box', 'chocolate-box', 'name-gift'] },
+  { id: 'kids', title: 'Kids Gifts', subtitle: 'Little gifts for big smiles.', image: '/category-kids.png', productIds: ['teddy-bear', 'birthday-box', 'chocolate-box'] },
+  { id: 'return-gifts', title: 'Return Gifts', subtitle: 'Thank your guests with a lovely keepsake.', image: '/category-return-gifts.png', productIds: ['chocolate-box', 'name-gift', 'candle-set', 'teddy-bear', 'flower-bouquet', 'birthday-box'] },
+  { id: 'hampers', title: 'Hampers', subtitle: 'A little of everything, beautifully packed.', image: '/category-hampers.png', productIds: ['luxury-hamper', 'birthday-box', 'chocolate-box', 'flower-bouquet'] },
 ];
 
 const budgetRanges = [
@@ -198,7 +206,7 @@ const collectionProducts = heroCategories.slice(0, 4).map((category, index) => (
   image: category.image,
 }));
 
-const whatsappNumber = '919788591998';
+const whatsappNumber = contactConfig.whatsapp;
 
 function PremiumGiftFinder({ products, onAddToBag, onViewProduct }) {
   const prefersReducedMotion = useReducedMotion();
@@ -879,8 +887,8 @@ function FeaturedCategoriesCarousel({ categories, selectedCategory, onSelectCate
                     aria-pressed={selectedCategory === category.id}
                     className={`group min-w-[118px] shrink-0 text-center transition sm:min-w-[200px] ${selectedCategory === category.id ? 'opacity-100' : 'opacity-95'}`}
                   >
-                    <span className={`mx-auto mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-[#eef5f8] shadow-[0_10px_24px_rgba(24,59,86,0.14)] transition group-hover:scale-[1.02] sm:mb-3 sm:h-36 sm:w-36 sm:border-[4px] ${selectedCategory === category.id ? 'ring-4 ring-[#183B56]/10' : ''}`}>
-                      <img src={category.image} alt="" className="h-auto w-[84%] object-contain" />
+                    <span className={`mx-auto mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full transition group-hover:scale-[1.02] sm:mb-3 sm:h-36 sm:w-36 ${selectedCategory === category.id ? 'ring-4 ring-[#183B56]/10' : ''}`}>
+                      <img src={category.image} alt="" className="h-full w-full object-cover" />
                     </span>
                     <span className="block text-center text-[12px] font-medium leading-tight text-[#183B56] sm:text-[14px]">
                       {category.title}
@@ -888,8 +896,8 @@ function FeaturedCategoriesCarousel({ categories, selectedCategory, onSelectCate
                   </button>
                 ) : (
                   <div key={category.id} className="min-w-[118px] shrink-0 text-center opacity-95 sm:min-w-[200px]">
-                    <span className="mx-auto mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-[#eef5f8] shadow-[0_10px_24px_rgba(24,59,86,0.14)] sm:mb-3 sm:h-36 sm:w-36 sm:border-[4px]">
-                      <img src={category.image} alt="" className="h-auto w-[84%] object-contain" />
+                    <span className="mx-auto mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full sm:mb-3 sm:h-36 sm:w-36">
+                      <img src={category.image} alt="" className="h-full w-full object-cover" />
                     </span>
                     <span className="block text-center text-[12px] font-medium leading-tight text-[#183B56] sm:text-[14px]">
                       {category.title}
@@ -1001,6 +1009,7 @@ function HomePage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [designName, setDesignName] = useState('Ari & Sam');
   const [designMessage, setDesignMessage] = useState('For all the little moments we treasure');
@@ -1023,24 +1032,25 @@ function HomePage() {
 
   const filteredProducts = useMemo(() => {
     if (selectedBudgetRange) {
-      return products.filter(
+      return ourCollectionProducts.filter(
         (product) => product.price >= selectedBudgetRange.min && product.price <= selectedBudgetRange.max,
       );
     }
 
-    if (selectedCategory === 'All') return products;
+    if (selectedCategory === 'All') return ourCollectionProducts;
 
     const selectedProductIds = categoryProductIds[selectedCategory] ?? [];
-    const matches = products.filter((product) => selectedProductIds.includes(product.id));
+    const matches = ourCollectionProducts.filter((product) => selectedProductIds.includes(product.id));
 
-    return matches.length > 0 ? matches : products;
+    return matches.length > 0 ? matches : ourCollectionProducts;
   }, [selectedCategory, selectedBudgetRange]);
 
   const searchResults = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    if (!term) return products.slice(0, 6);
+    const searchableProducts = [...products, ...personalizedProducts];
+    if (!term) return searchableProducts.slice(0, 6);
 
-    return products.filter(
+    return searchableProducts.filter(
       (product) =>
         product.name.toLowerCase().includes(term) ||
         product.category.toLowerCase().includes(term) ||
@@ -1050,10 +1060,10 @@ function HomePage() {
 
   const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);
   const wishlistProducts = wishlistIds
-    .map((id) => [...products, ...collectionProducts].find((product) => product.id === id))
+    .map((id) => [...products, ...personalizedProducts, ...collectionProducts, ...ourCollectionProducts].find((product) => product.id === id))
     .filter(Boolean);
 
-  const handleAddToBag = (product) => {
+  const handleAddToBag = (product, { openCart = true } = {}) => {
     setCartItems((current) => {
       const existing = current.find((item) => item.id === product.id);
       if (existing) {
@@ -1063,10 +1073,15 @@ function HomePage() {
       }
       return [...current, { ...product, quantity: 1 }];
     });
-    setCartOpen(true);
+    setCartOpen(openCart);
     setWishlistOpen(false);
     setSearchOpen(false);
     setSelectedProduct(null);
+  };
+
+  const handleBuyNow = (product) => {
+    handleAddToBag(product, { openCart: false });
+    navigate('/checkout');
   };
 
   const handleUpdateQuantity = (productId, delta) => {
@@ -1087,6 +1102,14 @@ function HomePage() {
     setWishlistIds((current) =>
       current.includes(productId) ? current.filter((id) => id !== productId) : [...current, productId],
     );
+  };
+
+  const handlePersonalizeProduct = (product) => {
+    setSearchOpen(false);
+    setWishlistOpen(false);
+    setSelectedProduct(null);
+    navigate(`/personalized/${product.id}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const onNewsletterSubmit = (event) => {
@@ -1123,6 +1146,9 @@ function HomePage() {
         wishlistProducts={wishlistProducts}
         cartOpen={cartOpen}
         wishlistOpen={wishlistOpen}
+        accountOpen={accountOpen}
+        onPersonalizeProduct={handlePersonalizeProduct}
+        onSetAccountOpen={setAccountOpen}
         onSetCartOpen={setCartOpen}
         onSetWishlistOpen={setWishlistOpen}
         onToggleWishlist={toggleWishlist}
@@ -1143,26 +1169,29 @@ function HomePage() {
   return (
     <div className="min-h-screen bg-[#FFFCF7] text-[#243746]">
       <header className="fixed inset-x-0 top-0 z-40 bg-[#183B56] shadow-[0_10px_35px_rgba(10,35,55,0.18)]">
-        <div className="border-b border-white/10 bg-[#102D44] px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.28em] text-white sm:text-[11px]">
-          <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-2">
+        <div className="border-b border-white/10 bg-[#102D44] px-2 py-1.5 text-center text-[8px] font-semibold uppercase tracking-[0.14em] text-white sm:px-3 sm:py-2 sm:text-[11px] sm:tracking-[0.28em]">
+          <div className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-1 sm:gap-3 sm:px-2">
             <span className="text-[#EAF7FF]">Luxury gifting for every celebration</span>
             <button
               type="button"
-              onClick={() => document.getElementById('featured-products')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              className="rounded-full border border-white/40 bg-white/10 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-white transition hover:bg-white hover:text-[#183B56]"
+              onClick={() => document.getElementById(location.pathname.startsWith('/personalized') ? 'personalized-products' : 'featured-products')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="shrink-0 rounded-full border border-white/40 bg-white/10 px-2.5 py-1.5 text-[8px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-white hover:text-[#183B56] sm:px-3 sm:text-[9px] sm:tracking-[0.22em]"
             >
               Shop Now
             </button>
           </div>
         </div>
 
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-3 py-3 sm:px-4 sm:py-4 lg:px-8">
+        <nav className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2 sm:px-4 sm:py-4 lg:px-8">
           <Link to="/" aria-label="Home" className="shrink-0">
-            <Logo />
+            <Logo compact />
           </Link>
 
           <div className="hidden items-center gap-8 lg:flex">
             {navLinks.map((link) => {
+              if (link.label === 'Personalized') {
+                return <PersonalizedMegaMenu key={link.label} />;
+              }
               const isRoute = link.href.startsWith('/');
               const LinkComponent = isRoute ? Link : 'a';
               const linkProps = isRoute ? { to: link.href } : { href: link.href };
@@ -1175,17 +1204,19 @@ function HomePage() {
             })}
           </div>
 
-          <div className="hidden items-center gap-3 lg:flex">
-            <button type="button" onClick={() => setSearchOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/95 text-[#183B56] shadow-sm transition hover:bg-white" aria-label="Search gifts">
-              <Search size={18} />
+          <div className="flex items-center gap-0.5 sm:gap-1">
+            <button type="button" onClick={() => setSearchOpen(true)} className="flex h-8 w-8 items-center justify-center rounded-full text-white transition hover:bg-white/10 hover:text-[#87CEEB] sm:h-9 sm:w-9" aria-label="Search gifts">
+              <Search size={19} />
             </button>
-            <button type="button" onClick={() => setWishlistOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/95 text-[#183B56] shadow-sm transition hover:bg-white" aria-label="Open wishlist">
-              <Heart size={18} />
+            <button type="button" onClick={() => setAccountOpen(true)} className="flex h-8 w-8 items-center justify-center rounded-full text-white transition hover:bg-white/10 hover:text-[#87CEEB] sm:h-9 sm:w-9" aria-label="Open account login">
+              <UserRound size={19} />
             </button>
-            <button type="button" onClick={() => setCartOpen(true)} className="relative flex items-center gap-3 rounded-full bg-[#102D44] px-4 py-2.5 text-white shadow-[0_20px_40px_rgba(10,35,55,0.24)]" aria-label="Cart">
-              <ShoppingBag size={18} />
-              <span className="text-sm font-medium">Bag</span>
-              <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#87CEEB] px-1.5 text-xs font-semibold text-[#183B56]">
+            <button type="button" onClick={() => setWishlistOpen(true)} className="flex h-8 w-8 items-center justify-center rounded-full text-white transition hover:bg-white/10 hover:text-[#87CEEB] sm:h-9 sm:w-9" aria-label="Open wishlist">
+              <Heart size={19} />
+            </button>
+            <button type="button" onClick={() => setCartOpen(true)} className="relative flex h-8 w-8 items-center justify-center rounded-full text-white transition hover:bg-white/10 hover:text-[#87CEEB] sm:h-9 sm:w-9" aria-label={`Cart, ${cartCount} items`}>
+              <ShoppingBag size={19} />
+              <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#87CEEB] px-1 text-[9px] font-semibold text-[#183B56]">
                 {cartCount}
               </span>
             </button>
@@ -1201,6 +1232,9 @@ function HomePage() {
             <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="border-t border-white/15 bg-[#183B56] px-4 py-5 lg:hidden">
               <div className="space-y-4">
                 {navLinks.map((link) => {
+                  if (link.label === 'Personalized') {
+                    return <PersonalizedMegaMenu key={link.label} mobile onNavigate={() => setMenuOpen(false)} />;
+                  }
                   const isRoute = link.href.startsWith('/');
                   const LinkComponent = isRoute ? Link : 'a';
                   const linkProps = isRoute ? { to: link.href } : { href: link.href };
@@ -1210,21 +1244,6 @@ function HomePage() {
                     </LinkComponent>
                   );
                 })}
-                <div className="flex items-center gap-3 pt-2">
-                  <button type="button" onClick={() => setSearchOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-[#183B56]">
-                    <Search size={18} />
-                  </button>
-                  <button type="button" onClick={() => setWishlistOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-[#183B56]" aria-label="Open wishlist">
-                    <Heart size={18} />
-                  </button>
-                  <button type="button" onClick={() => setCartOpen(true)} className="flex items-center gap-3 rounded-full bg-[#102D44] px-4 py-2.5 text-white">
-                    <ShoppingBag size={18} />
-                    <span>Bag</span>
-                    <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#87CEEB] px-1.5 text-xs font-semibold text-[#183B56]">
-                      {cartCount}
-                    </span>
-                  </button>
-                </div>
               </div>
             </motion.div>
           ) : null}
@@ -1232,7 +1251,18 @@ function HomePage() {
       </header>
 
       <main id="home" className="pt-[112px] sm:pt-[124px] lg:pt-[132px]">
-        <section id="categories" className="bg-white py-5">
+        {location.pathname === '/contact' ? (
+          <ContactPage />
+        ) : location.pathname.startsWith('/personalized') ? (
+          <PersonalizedGiftsContent
+            wishlistIds={wishlistIds}
+            onToggleWishlist={toggleWishlist}
+            onAddToBag={handleAddToBag}
+            onBuyNow={handleBuyNow}
+          />
+        ) : (
+          <>
+        <section id="categories" className="bg-white py-3 sm:py-5">
           <div className="mx-auto max-w-[1700px] px-3 lg:px-8">
             <FeaturedCategoriesCarousel
               categories={giftCategories}
@@ -1250,7 +1280,7 @@ function HomePage() {
           </div>
         </section>
 
-        <section className="relative h-[48svh] min-h-[260px] max-h-[760px] overflow-hidden bg-[#102D44] sm:h-[58vh] sm:min-h-[360px] lg:h-[68vh] lg:min-h-[420px]">
+        <section className="relative h-[38svh] min-h-[220px] max-h-[380px] overflow-hidden bg-[#102D44] sm:h-[58vh] sm:min-h-[360px] sm:max-h-[760px] lg:h-[68vh] lg:min-h-[420px]">
           <video
             className="absolute inset-0 h-full w-full object-cover"
             src="/gemini_generated_video_47cac1c4.mp4"
@@ -1261,9 +1291,9 @@ function HomePage() {
           />
         </section>
 
-        <section id="featured-products" className="bg-[#F8FBFF] py-14 sm:py-20 lg:py-24">
+        <section id="featured-products" className="bg-[#F8FBFF] py-10 sm:py-20 lg:py-24">
           <div className="mx-auto max-w-7xl px-4 lg:px-8">
-            <div className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="mb-8 flex flex-col gap-4 sm:mb-12 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2 className="font-display text-[clamp(2rem,8vw,3rem)] leading-tight text-[#183B56]">
                   {selectedBudgetRange
@@ -1364,15 +1394,26 @@ function HomePage() {
                     <p className="mt-3 max-w-[19rem] text-sm leading-6 text-[#183B56] sm:mt-4 sm:text-base sm:leading-7">
                       {card.description}
                     </p>
-                    <a
-                      href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(card.message)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-lg bg-[#183B56] px-4 py-3 text-xs font-semibold text-white transition hover:bg-[#087CC1] sm:mt-7 sm:px-6 sm:text-sm"
-                    >
-                      <MessageCircle size={17} className="shrink-0 text-[#80E5A3]" />
-                      {card.buttonLabel}
-                    </a>
+                    {whatsappNumber ? (
+                      <a
+                        href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(card.message)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-lg bg-[#183B56] px-4 py-3 text-xs font-semibold text-white transition hover:bg-[#087CC1] sm:mt-7 sm:px-6 sm:text-sm"
+                      >
+                        <MessageCircle size={17} className="shrink-0 text-[#80E5A3]" />
+                        {card.buttonLabel}
+                      </a>
+                    ) : (
+                      <span
+                        aria-disabled="true"
+                        title="WhatsApp number not configured"
+                        className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-lg bg-[#183B56]/60 px-4 py-3 text-xs font-semibold text-white sm:mt-7 sm:px-6 sm:text-sm"
+                      >
+                        <MessageCircle size={17} className="shrink-0 text-[#80E5A3]" />
+                        {card.buttonLabel}
+                      </span>
+                    )}
                   </div>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex w-[47%] items-center justify-center sm:w-[45%]">
                     <img
@@ -1432,6 +1473,8 @@ function HomePage() {
             </div>
           </div>
         </section>
+          </>
+        )}
       </main>
 
       <footer id="contact" className="border-t border-[#183B56] bg-[#102D44] text-[#EAF7FC]">
@@ -1447,7 +1490,7 @@ function HomePage() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#87CEEB]">Shop</p>
             <ul className="mt-5 space-y-3 text-sm text-[#EAF7FC]">
               <li><a href="#featured-products">Gift Hampers</a></li>
-              <li><a href="#featured-products">Personalised Gifts</a></li>
+              <li><Link to="/personalized">Personalized Gifts</Link></li>
               <li><a href="#categories">Occasion Gifts</a></li>
               <li><a href="#featured-products">Corporate Gifts</a></li>
             </ul>
@@ -1456,6 +1499,7 @@ function HomePage() {
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#87CEEB]">Support</p>
             <ul className="mt-5 space-y-3 text-sm text-[#EAF7FC]">
+              <li><Link to="/contact">Contact Us</Link></li>
               <li><a href="#">Newsletter</a></li>
               <li><a href="#">Privacy Policy</a></li>
               <li><a href="#">Terms</a></li>
@@ -1465,9 +1509,9 @@ function HomePage() {
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#87CEEB]">Contact</p>
             <ul className="mt-5 space-y-3 text-sm text-[#EAF7FC]">
-              <li>hello@[yourgiftshopname].com</li>
-              <li>+91 98765 43210</li>
-              <li>12 Amber Lane, Bengaluru</li>
+              <li>{contactConfig.email || 'Business email not configured'}</li>
+              <li>{contactConfig.phone || 'Business phone not configured'}</li>
+              <li>{contactConfig.address || 'Shop address not configured'}</li>
             </ul>
             <div className="mt-6 flex items-center gap-3 text-[#EAF7FC]">
               <a href="#" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10"><Camera size={16} /></a>
@@ -1488,6 +1532,7 @@ function HomePage() {
         results={searchResults}
         onClose={() => setSearchOpen(false)}
         onQuickView={setSelectedProduct}
+        onPersonalize={handlePersonalizeProduct}
         onAddToBag={handleAddToBag}
       />
       <CartDrawer
@@ -1507,6 +1552,7 @@ function HomePage() {
         onClose={() => setWishlistOpen(false)}
         onRemove={toggleWishlist}
         onAddToBag={handleAddToBag}
+        onPersonalize={handlePersonalizeProduct}
       />
       <QuickViewModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onAddToBag={handleAddToBag} />
       <PersonalizeModal
@@ -1518,6 +1564,7 @@ function HomePage() {
         onClose={() => setCustomiseOpen(false)}
         onSave={() => setCustomiseOpen(false)}
       />
+      <AccountAuthModal isOpen={accountOpen} onClose={() => setAccountOpen(false)} />
     </div>
   );
 }
