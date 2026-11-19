@@ -72,9 +72,12 @@ function ProductCatalogue({ products, wishlistIds, onToggleWishlist, onAddToBag 
   const pointerStart = useRef(null);
   const suppressClick = useRef(false);
   const visiblePageCount = isMobile ? 1 : 2;
-  const lastPageIndex = Math.max(0, products.length - visiblePageCount);
+  const pageStep = visiblePageCount;
+  const lastPageIndex = isMobile
+    ? Math.max(0, products.length - 1)
+    : Math.max(0, Math.floor((products.length - 1) / pageStep) * pageStep);
   const safePageIndex = Math.min(pageIndex, lastPageIndex);
-  const visiblePageIndex = flip ? Math.min(flip.targetIndex, lastPageIndex) : safePageIndex;
+  const visiblePageIndex = safePageIndex;
   const displayedProducts = Array.from(
     { length: visiblePageCount },
     (_, index) => products[visiblePageIndex + index],
@@ -85,27 +88,71 @@ function ProductCatalogue({ products, wishlistIds, onToggleWishlist, onAddToBag 
     const handleViewportChange = (event) => {
       setIsMobile(event.matches);
       setFlip(null);
-      setPageIndex((index) => Math.min(index, Math.max(0, products.length - (event.matches ? 1 : 2))));
+      setPageIndex((index) => {
+        if (event.matches) return Math.min(index, Math.max(0, products.length - 1));
+        const stepLastIndex = Math.max(0, Math.floor((products.length - 1) / 2) * 2);
+        return Math.min(index, stepLastIndex);
+      });
     };
 
     mediaQuery.addEventListener('change', handleViewportChange);
     return () => mediaQuery.removeEventListener('change', handleViewportChange);
   }, [products.length]);
 
+  useEffect(() => {
+    setFlip(null);
+    setPageIndex(0);
+  }, [products]);
+
+  useEffect(() => {
+    if (bookState !== 'opening' && bookState !== 'closing') return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      if (bookState === 'opening') {
+        setBookState('open');
+      } else {
+        setPageIndex(0);
+        setFlip(null);
+        setBookState('closed');
+      }
+    }, 1000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [bookState]);
+
+  useEffect(() => {
+    if (!flip) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setPageIndex(Math.min(flip.targetIndex, lastPageIndex));
+      setFlip(null);
+    }, 950);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [flip, lastPageIndex]);
+
   const turnPage = (direction) => {
     if (flip) return;
     const currentIndex = Math.min(pageIndex, lastPageIndex);
     const isNext = direction === 'next';
     const targetIndex = isNext
-      ? Math.min(currentIndex + 1, lastPageIndex)
-      : Math.max(currentIndex - 1, 0);
+      ? Math.min(currentIndex + pageStep, lastPageIndex)
+      : Math.max(currentIndex - pageStep, 0);
     if (targetIndex === currentIndex) {
       if (isNext && bookState === 'open' && currentIndex >= lastPageIndex) setBookState('closing');
       return;
     }
 
-    const frontIndex = isNext ? currentIndex + 1 : currentIndex;
-    const backIndex = isNext ? targetIndex : targetIndex + 1;
+    const frontIndex = isMobile
+      ? currentIndex
+      : isNext
+        ? currentIndex + 1
+        : currentIndex;
+    const backIndex = isMobile
+      ? targetIndex
+      : isNext
+        ? targetIndex
+        : targetIndex + 1;
     setFlip({ direction, targetIndex, frontIndex, backIndex });
   };
 
@@ -186,20 +233,11 @@ function ProductCatalogue({ products, wishlistIds, onToggleWishlist, onAddToBag 
       event.preventDefault();
       return;
     }
-    if (bookState !== 'open') return;
+    if (bookState !== 'open' || flip) return;
     if (event.target.closest('button, a, input, textarea, select')) return;
 
-    const clickedPage = event.target.closest('.catalogue-page:not(.catalogue-page--blank)');
-    if (!clickedPage) return;
-
-    if (isMobile) {
-      const { left, width } = clickedPage.getBoundingClientRect();
-      turnPage(event.clientX >= left + width / 2 ? 'next' : 'previous');
-      return;
-    }
-
-    const clickedPageIndex = Number(clickedPage.dataset.pageIndex);
-    turnPage(clickedPageIndex % 2 === 0 ? 'previous' : 'next');
+    const { left, width } = event.currentTarget.getBoundingClientRect();
+    turnPage(event.clientX >= left + width / 2 ? 'next' : 'previous');
   };
 
   const pageLabel = isMobile
@@ -237,7 +275,7 @@ function ProductCatalogue({ products, wishlistIds, onToggleWishlist, onAddToBag 
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
-        aria-label="Interactive gift catalogue. Drag a page with a mouse, swipe on a phone, click a page, or use the arrow keys to turn pages."
+        aria-label="Interactive gift catalogue. Click or swipe either side of the open book to turn pages, or use the arrow keys."
       >
         <div className="catalogue-book__cover" aria-hidden="true" />
         <button
@@ -323,10 +361,10 @@ function ProductCatalogue({ products, wishlistIds, onToggleWishlist, onAddToBag 
       </div>
       <p className="catalogue__hint">
         {bookState === 'closed'
-          ? 'Click the book or Open Book to explore the collection'
+          ? 'Click the book cover to explore the collection'
           : isAtEnd
-            ? 'Reached the end of the collection · Explore Gifts to close the book'
-            : 'Click the right page to continue · click the left page to go back'}
+            ? 'End of the collection · click the left side to go back'
+            : 'Click anywhere on the right side to continue · click the left side to go back'}
       </p>
     </div>
   );
